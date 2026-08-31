@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>管理画面 – VOREAS MEGASTORE</title>
+  <link rel="stylesheet" href="css/style.css?v=20260901c">
+  <link rel="stylesheet" href="css/product.css?v=20260901c">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.png" type="image/png">
+  <style>
+    .manage-login {
+      max-width: 400px;
+      margin: 100px auto;
+      padding: 40px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .manage-login h1 { font-size: 20px; margin-bottom: 24px; text-align: center; }
+    .manage-login input { width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
+    .manage-login button { width: 100%; padding: 14px; background: #000; color: #fff; border: none; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .manage-login button:hover { background: #333; }
+    .manage-login .error { color: #c60025; font-size: 14px; margin-bottom: 16px; text-align: center; }
+    
+    .manage-app { display: none; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .manage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .manage-header h1 { font-size: 24px; }
+    .manage-header button { padding: 8px 20px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    
+    .chat-container { background: #f9f9f9; border-radius: 12px; padding: 24px; min-height: 400px; max-height: 600px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #eee; }
+    .chat-message { margin-bottom: 16px; }
+    .chat-message--bot { text-align: left; }
+    .chat-message--user { text-align: right; }
+    .chat-message__bubble { display: inline-block; padding: 12px 16px; border-radius: 12px; max-width: 80%; font-size: 15px; line-height: 1.6; }
+    .chat-message--bot .chat-message__bubble { background: #fff; border: 1px solid #ddd; }
+    .chat-message--user .chat-message__bubble { background: #000; color: #fff; }
+    .chat-message__image { max-width: 200px; border-radius: 8px; margin-top: 8px; }
+    
+    .chat-input-area { display: flex; gap: 12px; align-items: flex-end; }
+    .chat-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; resize: vertical; min-height: 44px; }
+    .chat-send { padding: 12px 24px; background: #000; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .chat-send:hover { background: #333; }
+    .chat-send:disabled { background: #999; cursor: not-allowed; }
+    
+    .chat-upload { padding: 10px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .chat-upload:hover { background: #e0e0e0; }
+    
+    .product-preview { background: #fff; border: 2px solid #000; border-radius: 12px; padding: 24px; margin-top: 20px; }
+    .product-preview h3 { margin-bottom: 16px; font-size: 18px; }
+    .product-preview__row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .product-preview__row span:first-child { color: #888; }
+    .product-preview__row span:last-child { font-weight: 600; }
+    .product-preview__image { max-width: 200px; border-radius: 8px; margin: 12px 0; }
+    .product-preview__register { width: 100%; padding: 16px; background: #c60025; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+    .product-preview__register:hover { background: #a0001e; }
+    .product-preview__register:disabled { background: #999; cursor: not-allowed; }
+    
+    .size-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    .size-checkbox { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; }
+    .size-checkbox input { margin: 0; }
+    .size-checkbox--selected { background: #000; color: #fff; border-color: #000; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div class="manage-login" id="loginScreen">
+    <h1>VOREAS MEGASTORE 管理画面</h1>
+    <div class="error" id="loginError"></div>
+    <input type="text" id="loginId" placeholder="ログインID" autocomplete="off">
+    <input type="password" id="loginPass" placeholder="パスワード" autocomplete="off">
+    <button onclick="doLogin()">ログイン</button>
+  </div>
+
+  <!-- Manage App -->
+  <div class="manage-app" id="manageApp">
+    <div class="manage-header">
+      <h1>商品登録アシスタント</h1>
+      <button onclick="doLogout()">ログアウト</button>
+    </div>
+    
+    <div class="chat-container" id="chatContainer">
+      <!-- Chat messages will be added here -->
+    </div>
+    
+    <div class="chat-input-area">
+      <label class="chat-upload">
+        📷 画像
+        <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+      </label>
+      <textarea class="chat-input" id="chatInput" placeholder="メッセージを入力..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendUserMessage();}"></textarea>
+      <button class="chat-send" id="sendBtn" onclick="sendUserMessage()">送信</button>
+    </div>
+    
+    <div id="productPreview" style="display:none;"></div>
+  </div>
+
+  <script>
+    // --- Auth ---
+    const AUTH_KEY = 'manage_auth';
+    const LOGIN_ID = 'voreas';
+    const LOGIN_PASS = 'megastore2026';
+
+    function doLogin() {
+      const id = document.getElementById('loginId').value;
+      const pass = document.getElementById('loginPass').value;
+      if (id === LOGIN_ID && pass === LOGIN_PASS) {
+        sessionStorage.setItem(AUTH_KEY, 'true');
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('manageApp').style.display = 'block';
+        startConversation();
+      } else {
+        document.getElementById('loginError').textContent = 'IDまたはパスワードが正しくありません。';
+      }
+    }
+
+    function doLogout() {
+      sessionStorage.removeItem(AUTH_KEY);
+      location.reload();
+    }
+
+    // Check auth on load
+    if (sessionStorage.getItem(AUTH_KEY) === 'true') {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('manageApp').style.display = 'block';
+      startConversation();
+    }
+
+    // --- Chat state ---
+    let conversationState = 'initial';
+    let productData = {
+      name: '',
+      type: '',
+      colors: [],
+      sizes: [],
+      players: [],
+      priceWolves: 0,
+      pricePlayer: 0,
+      description: '',
+      imageFile: null,
+      imageUrl: null,
+      category: '',
+    };
+
+    function startConversation() {
+      addBotMessage('VOREAS MEGASTORE 商品登録アシスタントへようこそ！\n\nSquare API経由で商品を登録します。以下の情報を順番に教えてください。\n\nまず、商品タイプを教えてください：\n1. オーセンティックユニフォーム\n2. レプリカユニフォーム\n3. レプリカユニフォームKIDS\n4. その他\n\n番号または名前で入力してください。');
+      conversationState = 'awaiting_type';
+    }
+
+    function addBotMessage(text) {
+      const container = document.getElementById('chatContainer');
+      const msg = document.createElement('div');
+      msg.className = 'chat-message chat-message--bot';
+      msg.innerHTML = `<div class="chat-message__bubble">${text.replace(/\n/g, '<br>')}</div>`;
+      container.appendChild(msg);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function addUserMessage(text, imageUrl) {
+      const container = document.getElementById('chatContainer');
+      const msg = document.createElement('div');
+      msg.className = 'chat-message chat-message--user';
+      let html = `<div class="chat-message__bubble">${text.replace(/\n/g, '<br>')}`;
+      if (imageUrl) {
+        html += `<br><img src="${imageUrl}" class="chat-message__image">`;
+      }
+      html += '</div>';
+      msg.innerHTML = html;
+      container.appendChild(msg);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendUserMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      addUserMessage(text);
+      input.value = '';
+      
+      // Process based on conversation state
+      processUserInput(text);
+    }
+
+    function processUserInput(text) {
+      switch (conversationState) {
+        case 'awaiting_type':
+          handleTypeInput(text);
+          break;
+        case 'awaiting_colors':
+          handleColorsInput(text);
+          break;
+        case 'awaiting_sizes':
+          handleSizesInput(text);
+          break;
+        case 'awaiting_price_wolves':
+          handlePriceWolvesInput(text);
+          break;
+        case 'awaiting_price_player':
+          handlePricePlayerInput(text);
+          break;
+        case 'awaiting_players':
+          handlePlayersInput(text);
+          break;
+        case 'awaiting_image':
+          handleImageRequest(text);
+          break;
+        case 'awaiting_confirm':
+          handleConfirm(text);
+          break;
+      }
+    }
+
+    function handleTypeInput(text) {
+      const lower = text.toLowerCase();
+      if (text.includes('1') || text.includes('オーセンティック')) {
+        productData.type = 'authentic';
+        productData.category = '★VOREASグッズ【アパレル系】';
+      } else if (text.includes('2') || text.includes('レプリカ')) {
+        productData.type = 'replica';
+        productData.category = '★VOREASグッズ【アパレル系】';
+      } else if (text.includes('3') || text.includes('kids') || text.includes('KIDS')) {
+        productData.type = 'kids';
+        productData.category = '★VOREASグッズ【アパレル系】';
+      } else {
+        productData.type = 'other';
+        productData.category = '★VOREASグッズ【アパレル系】';
+      }
+      
+      addBotMessage('カラーを教えてください。複数ある場合はカンマ区切りで入力してください。\n例: HOME, AWAY, LIBERO または RED, BLACK, GRAY');
+      conversationState = 'awaiting_colors';
+    }
+
+    function handleColorsInput(text) {
+      productData.colors = text.split(/[,、\s]+/).filter(c => c);
+      addBotMessage('サイズ展開を教えてください。カンマ区切りで入力してください。\n例: 2S, S, M, L, XL, 2XL, 3XL');
+      conversationState = 'awaiting_sizes';
+    }
+
+    function handleSizesInput(text) {
+      productData.sizes = text.split(/[,、\s]+/).filter(s => s);
+      addBotMessage('#1 WOLVES（サポーターナンバー）の価格（税込）を入力してください。\n例: 22000');
+      conversationState = 'awaiting_price_wolves';
+    }
+
+    function handlePriceWolvesInput(text) {
+      productData.priceWolves = parseInt(text.replace(/[^0-9]/g, '')) || 0;
+      addBotMessage('選手背番号ありの価格（税込）を入力してください。\n例: 27500');
+      conversationState = 'awaiting_price_player';
+    }
+
+    function handlePricePlayerInput(text) {
+      productData.pricePlayer = parseInt(text.replace(/[^0-9]/g, '')) || 0;
+      addBotMessage('登録する選手を教えてください。背番号と選手名をカンマ区切りで入力してください。\n例: #1 WOLVES, #2 中道優斗, #3 国京大海\n\n「全選手」と入力すると前回と同じ17名を登録します。');
+      conversationState = 'awaiting_players';
+    }
+
+    function handlePlayersInput(text) {
+      if (text.includes('全選手')) {
+        productData.players = [
+          {no: 1, name: 'WOLVES'},
+          {no: 2, name: '中道 優斗'}, {no: 3, name: '国京 大海'},
+          {no: 4, name: '松下 彪雅'}, {no: 5, name: '井上 仁'},
+          {no: 6, name: '山岸 隼'}, {no: 7, name: 'ニキタ ゾロトゥーヒン'},
+          {no: 8, name: '日車 恭輔'}, {no: 9, name: '池田 幸太'},
+          {no: 10, name: 'メルト タンメアル'}, {no: 11, name: '外崎 航平'},
+          {no: 12, name: '荒尾 怜音'}, {no: 14, name: 'ウルリック ダール'},
+          {no: 17, name: '山田 航旗'}, {no: 18, name: '西 宏志郎'},
+          {no: 19, name: '浜田 翔太'}, {no: 34, name: '三好 佳介'},
+          {no: 44, name: 'ティモ タンメマー'},
+        ];
+      } else {
+        productData.players = text.split(/[,、]/).map(p => {
+          p = p.trim();
+          const match = p.match(/#?(\d+)\s*(.+)/);
+          if (match) return {no: parseInt(match[1]), name: match[2].trim()};
+          return {no: 0, name: p};
+        }).filter(p => p.no > 0);
+      }
+      
+      addBotMessage('商品画像をアップロードしてください。📷画像ボタンからアップロードできます。\n\n画像がない場合は「スキップ」と入力してください。');
+      conversationState = 'awaiting_image';
+    }
+
+    function handleImageRequest(text) {
+      if (text === 'スキップ') {
+        addBotMessage('了解しました。画像なしで登録します。');
+        showProductPreview();
+      }
+    }
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      productData.imageFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        productData.imageUrl = e.target.result;
+        addUserMessage('画像をアップロードしました', productData.imageUrl);
+        addBotMessage('画像を受け取りました！商品登録内容を確認してください。');
+        showProductPreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showProductPreview() {
+      const preview = document.getElementById('productPreview');
+      const totalItems = productData.players.length * productData.colors.length;
+      const totalVariations = totalItems * productData.sizes.length;
+      
+      let html = '<div class="product-preview"><h3>登録内容確認</h3>';
+      
+      if (productData.imageUrl) {
+        html += `<img src="${productData.imageUrl}" class="product-preview__image">`;
+      }
+      
+      html += `
+        <div class="product-preview__row"><span>商品タイプ</span><span>${productData.type}</span></div>
+        <div class="product-preview__row"><span>カラー</span><span>${productData.colors.join(', ')}</span></div>
+        <div class="product-preview__row"><span>サイズ</span><span>${productData.sizes.join(', ')}</span></div>
+        <div class="product-preview__row"><span>#1 WOLVES価格</span><span>¥${productData.priceWolves.toLocaleString()}</span></div>
+        <div class="product-preview__row"><span>選手背番号あり価格</span><span>¥${productData.pricePlayer.toLocaleString()}</span></div>
+        <div class="product-preview__row"><span>選手数</span><span>${productData.players.length}名</span></div>
+        <div class="product-preview__row"><span>カテゴリ</span><span>${productData.category}</span></div>
+        <div class="product-preview__row"><span>登録アイテム数</span><span>${totalItems}アイテム</span></div>
+        <div class="product-preview__row"><span>バリエーション数</span><span>${totalVariations}個</span></div>
+        <button class="product-preview__register" id="registerBtn" onclick="registerProducts()">この商品を登録してください</button>
+      </div>`;
+      
+      preview.innerHTML = html;
+      preview.style.display = 'block';
+      conversationState = 'awaiting_confirm';
+      
+      addBotMessage('上記の内容でSquareに登録します。よろしいですか？\n\n「登録」ボタンを押すとSquare Catalog APIに商品が登録されます。');
+    }
+
+    async function registerProducts() {
+      const btn = document.getElementById('registerBtn');
+      btn.disabled = true;
+      btn.textContent = '登録中...';
+      
+      addBotMessage('Square APIに登録中... お待ちください。');
+      
+      try {
+        const response = await fetch('/api/manage/register', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(productData),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          addBotMessage(`✅ 登録完了！\n\n${result.itemCount}アイテム / ${result.variationCount}バリエーションをSquareに登録しました。\n\n商品ページに自動反映されます。`);
+          btn.textContent = '登録完了';
+          btn.style.background = '#4caf50';
+        } else {
+          addBotMessage(`❌ 登録エラー: ${result.error || '不明なエラー'}`);
+          btn.disabled = false;
+          btn.textContent = 'この商品を登録してください';
+        }
+      } catch (e) {
+        addBotMessage(`❌ エラーが発生しました: ${e.message}`);
+        btn.disabled = false;
+        btn.textContent = 'この商品を登録してください';
+      }
+    }
+  </script>
+
+</body>
+</html>
