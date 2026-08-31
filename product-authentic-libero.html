@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-27シーズンオーセンティックユニフォーム[LIBERO]選手選択 – VOREAS MEGASTORE</title>
+  <link rel="stylesheet" href="css/style.css?v=20260831f">
+  <link rel="stylesheet" href="css/product.css?v=20260831f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.png" type="image/png">
+</head>
+<body data-product-type="authentic" data-product-color="libero">
+
+  <!-- Header (same as main site) -->
+  <header class="site-header">
+    <div class="site-header__logo">
+      <a href="/"><img src="images/logo.png" alt="VOREAS MEGASTORE"></a>
+    </div>
+    <nav>
+      <ul class="site-nav" id="siteNav">
+        <li><a href="/" class="site-nav__link">HOME</a></li>
+        <li><a href="/#ec-section" class="site-nav__link">GOODS</a></li>
+        <li><a href="https://ticket-v.jp/teams/?id=479" class="site-nav__link" target="_blank" rel="noopener">TICKET</a></li>
+        <li><a href="https://voreas.co.jp/" class="site-nav__link" target="_blank" rel="noopener">INFO</a></li>
+      </ul>
+    </nav>
+    <div class="site-header__icons">
+      <a href="/cart.html" class="site-header__icon" aria-label="カート">
+        <svg width="22px" height="23px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+      </a>
+    </div>
+    <button class="mobile-nav-toggle" onclick="document.getElementById('siteNav').classList.toggle('open')" aria-label="メニュー">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- Product Page -->
+  <div class="product-page">
+    <div class="product-container">
+
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="/">HOME</a> <span>›</span>
+        <a href="/#ec-section">2026-27 SEASON GOODS</a> <span>›</span>
+        <span>オーセンティックユニフォーム LIBERO</span>
+      </nav>
+
+      <div class="product-grid">
+
+        <!-- Product Images -->
+        <div class="product-gallery">
+          <div class="product-gallery__main">
+            <img src="images/products/uniform-2026-27-gray.jpg" alt="2026-27 オーセンティックユニフォーム LIBERO" id="mainImage">
+          </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="product-info">
+          <h1 class="product-info__title">2026-27シーズン オーセンティックユニフォーム</h1>
+          <div class="product-info__slogan">
+            <p class="product-info__slogan-main">スローガン ― <strong>革命、原点</strong></p>
+          </div>
+          <div class="product-info__price">
+            <span class="product-info__price-value">¥27,500</span>
+            <span class="product-info__price-tax">（税込）</span>
+          </div>
+          <div class="product-info__badge">LIBERO [GRAY]</div>
+
+          <!-- Size Selector -->
+          <div class="product-form">
+            <div class="product-form__group">
+              <label class="product-form__label">サイズ</label>
+              <div class="product-form__sizes">
+                <button class="size-btn" data-size="S">S</button>
+                <button class="size-btn" data-size="M">M</button>
+                <button class="size-btn" data-size="L">L</button>
+                <button class="size-btn" data-size="XL">XL</button>
+                <button class="size-btn" data-size="2XL">2XL</button>
+                <button class="size-btn" data-size="3XL">3XL</button>
+              </div>
+            </div>
+
+            <!-- Player Selector -->
+            <div class="product-form__group">
+              <label class="product-form__label">選手名 / ナンバー</label>
+              <div class="product-form__select-wrap">
+                <select class="product-form__select" id="playerSelect">
+                  <option value="">選手を選択してください</option>
+                  <option value="REON/#12">REON / #12</option>
+                  <option value="KOGA/#18">KOGA / #18</option>
+                  <option value="WOLVES/#1">WOLVES（サポーターナンバー）/ #1</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="product-form__group">
+              <label class="product-form__label">数量</label>
+              <div class="product-form__qty">
+                <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                <input type="number" class="qty-input" id="qtyInput" value="1" min="1">
+                <button class="qty-btn" onclick="changeQty(1)">+</button>
+              </div>
+            </div>
+
+            <!-- Price Display -->
+            <div class="product-form__total">
+              <span class="product-form__total-label">合計</span>
+              <span class="product-form__total-value" id="totalPrice">¥27,500（税込）</span>
+            </div>
+
+            <!-- Add to Cart -->
+            <a href="#" class="product-form__btn" id="cartBtn">
+              カートに入れる
+            </a>
+            <p class="product-form__note">受注販売期間：2026年9月1日（火）〜2027年4月30日（金）</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Description -->
+      <div class="product-description">
+        <div class="product-description__concept">
+          <p>『革命、原点』のシーズンコンセプトを元に、初代ユニフォームの象徴である「翼」をモチーフに、10年間の革命の歩みと、これからの挑戦をデザインに込めた10周年ユニフォーム。</p>
+          <p>クラブの歴史とともに刻まれてきた、数々の挑戦と変化。<br>その「革命の歴史」を受け継ぎながら、原点に立ち返り、次の10年へ進んでいく意志を表現しています。</p>
+        </div>
+
+        <div class="product-description__specs">
+          <h3>素材</h3>
+          <p>ポリエステル100%</p>
+
+          <h3>サイズ表</h3>
+          <table class="size-table">
+            <thead>
+              <tr><th>サイズ</th><th>着丈</th><th>身幅</th><th>肩幅</th><th>袖丈</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>S</td><td>66cm</td><td>50cm</td><td>44cm</td><td>20cm</td></tr>
+              <tr><td>M</td><td>70cm</td><td>53cm</td><td>47cm</td><td>22cm</td></tr>
+              <tr><td>L</td><td>74cm</td><td>56cm</td><td>50cm</td><td>24cm</td></tr>
+              <tr><td>XL</td><td>78cm</td><td>59cm</td><td>53cm</td><td>26cm</td></tr>
+              <tr><td>2XL</td><td>82cm</td><td>62cm</td><td>56cm</td><td>28cm</td></tr>
+              <tr><td>3XL</td><td>86cm</td><td>65cm</td><td>59cm</td><td>30cm</td></tr>
+            </tbody>
+          </table>
+          <p class="product-description__ref">参考：Lサイズ / 外崎 / 172cm</p>
+          <p class="product-description__sizes">注文可能サイズ：S / M / L / XL / 2XL / 3XL</p>
+
+          <h3>備考</h3>
+          <ul class="product-description__notes">
+            <li>※昨年とユニフォーム製作の工場が異なります。昨年のようにフィット感のあるタイプではなく一般的なメンズ向けのサイズではありますが、サイズ表を確認の上サイズ選択してください。</li>
+            <li><strong>キャンセル・返品について：</strong>サイズ変更を含むお客様のご都合による返品・交換、キャンセルは一切お受けいたしかねます。事前のサイズ表をよくご確認の上、ご注文ください。</li>
+            <li><strong>商品イメージについて：</strong>掲載の画像はイメージのため、実際の商品とはデザイン・色味・仕様が一部異なる場合がございます。あらかじめご了承ください。オーセンティックユニフォームの素材は、製造時期や選手着用モデルの仕様変更により、予告なく変更となる場合がございます。</li>
+            <li><strong>同梱発送について：</strong>お届け予定日が異なる商品を同時にご注文いただいた場合、すべての商品が揃い次第、まとめての発送となります。お急ぎの商品がある場合は、別々にご注文いただくことをお勧めいたします。</li>
+            <li><strong>配送期間について：</strong>通常、ご注文完了から発送まで1〜2週間ほどお時間をいただいております。</li>
+          </ul>
+
+          <div class="product-description__notice">
+            <p>※ご購入の際はサイズ・選手名をお間違いのないようご注意ください。</p>
+            <p>※クーポンコードを入力せずに購入された商品のキャンセル、事後の差額割引などはできかねます。</p>
+            <p>※本ページは、LIBERO [GRAY] の注文ページです</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer (same as main site) -->
+  <footer class="site-footer">
+    <div class="site-footer__sns">
+      <div class="site-footer__sns-title">SNS</div>
+      <ul class="site-footer__sns-icons">
+        <li><a href="https://www.facebook.com/voreas.hokkaido/" target="_blank" rel="noopener"><img src="images/icon-fb.png" alt="Facebook"></a></li>
+        <li><a href="https://twitter.com/voreas_official" target="_blank" rel="noopener"><img src="images/icon-twitter.png" alt="Twitter"></a></li>
+        <li><a href="https://www.instagram.com/voreas_official/" target="_blank" rel="noopener"><img src="images/icon-instagram.png" alt="Instagram"></a></li>
+        <li><a href="https://www.youtube.com/channel/UCXegE460iKkJ6v40Y41inRA" target="_blank" rel="noopener"><img src="images/icon-youtube.png" alt="YouTube"></a></li>
+      </ul>
+    </div>
+    <div class="site-footer__main">
+      <ul class="site-footer__links">
+        <li><a href="https://voreas-contact.pages.dev/contact">ご利用ガイド</a></li>
+        <li><a href="https://voreas-contact.pages.dev/contact">お問い合わせフォーム</a></li>
+        <li><a href="#">利用規約</a></li>
+        <li><a href="#">プライバシーポリシー</a></li>
+        <li><a href="#">配送ポリシー</a></li>
+        <li><a href="#">返金ポリシー</a></li>
+        <li><a href="#">特定商取引法に基づく表記</a></li>
+      </ul>
+      <div class="site-footer__copyright">
+        Copyright (C) 2026 VOREAS,INC. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Quantity
+    function changeQty(delta) {
+      const input = document.getElementById('qtyInput');
+      let val = parseInt(input.value) + delta;
+      if (val < 1) val = 1;
+      input.value = val;
+      updateTotal();
+    }
+
+    document.getElementById('qtyInput').addEventListener('change', updateTotal);
+
+    function updateTotal() {
+      const qty = parseInt(document.getElementById('qtyInput').value) || 1;
+      const basePrice = 27500;
+      const total = basePrice * qty;
+      document.getElementById('totalPrice').textContent = '¥' + total.toLocaleString() + '（税込）';
+    }
+  </script>
+  <script src="js/square-checkout.js?v=20260831f"></script>
+
+</body>
+</html>

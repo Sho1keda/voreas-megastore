@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ご注文ありがとうございます – VOREAS MEGASTORE</title>
+  <link rel="stylesheet" href="css/style.css?v=20260831f">
+  <link rel="stylesheet" href="css/product.css?v=20260831f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.png" type="image/png">
+</head>
+<body data-page="complete">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header__logo">
+      <a href="/"><img src="images/logo.png" alt="VOREAS MEGASTORE"></a>
+    </div>
+    <nav>
+      <ul class="site-nav" id="siteNav">
+        <li><a href="/" class="site-nav__link">HOME</a></li>
+        <li><a href="/#ec-section" class="site-nav__link">GOODS</a></li>
+        <li><a href="https://ticket-v.jp/teams/?id=479" class="site-nav__link" target="_blank" rel="noopener">TICKET</a></li>
+        <li><a href="https://voreas.co.jp/" class="site-nav__link" target="_blank" rel="noopener">INFO</a></li>
+      </ul>
+    </nav>
+    <div class="site-header__icons">
+      <a href="/cart.html" class="site-header__icon" aria-label="カート">
+        <svg width="22px" height="23px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+      </a>
+    </div>
+    <button class="mobile-nav-toggle" onclick="document.getElementById('siteNav').classList.toggle('open')" aria-label="メニュー">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- Order Complete -->
+  <div class="product-page">
+    <div class="product-container">
+      <div class="checkout-page">
+        <!-- Steps indicator -->
+        <div class="checkout-steps">
+          <div class="checkout-step checkout-step--done">1. カート ✓</div>
+          <div class="checkout-step checkout-step--done">2. お会計 ✓</div>
+          <div class="checkout-step checkout-step--active">3. 完了</div>
+        </div>
+
+        <div class="order-complete" id="orderComplete">
+          <div class="order-complete__icon">✓</div>
+          <h1 class="order-complete__title">ご注文ありがとうございます</h1>
+          <p class="order-complete__message">ご注文を受け付けました。ご登録のメールアドレスに確認メールをお送りします。</p>
+
+          <div class="order-complete__details">
+            <div class="order-complete__row">
+              <span class="order-complete__label">注文番号</span>
+              <span class="order-complete__value" id="orderId"></span>
+            </div>
+            <div class="order-complete__row">
+              <span class="order-complete__label">ご注文者</span>
+              <span class="order-complete__value" id="orderName"></span>
+            </div>
+            <div class="order-complete__row">
+              <span class="order-complete__label">合計金額</span>
+              <span class="order-complete__value" id="orderTotal"></span>
+            </div>
+          </div>
+
+          <div class="order-complete__items" id="orderItems"></div>
+
+          <div class="order-complete__receipt" id="receiptLink" style="display:none;">
+            <a href="#" target="_blank" rel="noopener">レシートを確認する</a>
+          </div>
+
+          <div class="order-complete__actions">
+            <a href="/" class="cart-empty__btn">トップページに戻る</a>
+          </div>
+
+          <div class="order-complete__note">
+            <p>※受注販売のため、商品の発送はご注文月の翌々月となります。</p>
+            <p>※キャンセル・返品・サイズ変更はお受けできません。あらかじめご了承ください。</p>
+            <p>※ご不明な点がございましたら <a href="https://voreas-contact.pages.dev/contact">お問い合わせフォーム</a> よりご連絡ください。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-footer__sns">
+      <div class="site-footer__sns-title">SNS</div>
+      <ul class="site-footer__sns-icons">
+        <li><a href="https://www.facebook.com/voreas.hokkaido/" target="_blank" rel="noopener"><img src="images/icon-fb.png" alt="Facebook"></a></li>
+        <li><a href="https://twitter.com/voreas_official" target="_blank" rel="noopener"><img src="images/icon-twitter.png" alt="Twitter"></a></li>
+        <li><a href="https://www.instagram.com/voreas_official/" target="_blank" rel="noopener"><img src="images/icon-instagram.png" alt="Instagram"></a></li>
+        <li><a href="https://www.youtube.com/channel/UCXegE460iKkJ6v40Y41inRA" target="_blank" rel="noopener"><img src="images/icon-youtube.png" alt="YouTube"></a></li>
+      </ul>
+    </div>
+    <div class="site-footer__main">
+      <ul class="site-footer__links">
+        <li><a href="https://voreas-contact.pages.dev/contact">ご利用ガイド</a></li>
+        <li><a href="https://voreas-contact.pages.dev/contact">お問い合わせフォーム</a></li>
+        <li><a href="#">利用規約</a></li>
+        <li><a href="#">プライバシーポリシー</a></li>
+        <li><a href="#">配送ポリシー</a></li>
+        <li><a href="#">返金ポリシー</a></li>
+        <li><a href="#">特定商取引法に基づく表記</a></li>
+      </ul>
+      <div class="site-footer__copyright">
+        Copyright (C) 2026 VOREAS,INC. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      const order = JSON.parse(sessionStorage.getItem('last_order') || 'null');
+      if (!order) {
+        window.location.href = '/';
+        return;
+      }
+
+      document.getElementById('orderId').textContent = order.paymentId;
+      document.getElementById('orderName').textContent = order.name;
+      document.getElementById('orderTotal').textContent = formatPrice(order.total) + '（税込）';
+
+      // Render items
+      const itemsEl = document.getElementById('orderItems');
+      order.items.forEach(item => {
+        const playerText = item.player ? `／${item.player}` : '';
+        const div = document.createElement('div');
+        div.className = 'checkout-order-item';
+        div.innerHTML = `
+          <div class="checkout-item__info">
+            <p class="checkout-item__name">${item.name}</p>
+            <p class="checkout-item__meta">${item.size}${playerText} ×${item.quantity}</p>
+          </div>
+          <div class="checkout-item__price">${formatPrice(item.unitPrice * item.quantity)}</div>
+        `;
+        itemsEl.appendChild(div);
+      });
+
+      // Receipt link
+      if (order.receiptUrl) {
+        const link = document.getElementById('receiptLink');
+        link.style.display = '';
+        link.querySelector('a').href = order.receiptUrl;
+      }
+
+      // Clear sessionStorage
+      sessionStorage.removeItem('last_order');
+    })();
+  </script>
+
+</body>
+</html>

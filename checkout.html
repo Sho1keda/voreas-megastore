@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>お会計 – VOREAS MEGASTORE</title>
+  <link rel="stylesheet" href="css/style.css?v=20260831f">
+  <link rel="stylesheet" href="css/product.css?v=20260831f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.png" type="image/png">
+</head>
+<body data-page="checkout">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header__logo">
+      <a href="/"><img src="images/logo.png" alt="VOREAS MEGASTORE"></a>
+    </div>
+    <nav>
+      <ul class="site-nav" id="siteNav">
+        <li><a href="/" class="site-nav__link">HOME</a></li>
+        <li><a href="/#ec-section" class="site-nav__link">GOODS</a></li>
+        <li><a href="https://ticket-v.jp/teams/?id=479" class="site-nav__link" target="_blank" rel="noopener">TICKET</a></li>
+        <li><a href="https://voreas.co.jp/" class="site-nav__link" target="_blank" rel="noopener">INFO</a></li>
+      </ul>
+    </nav>
+    <div class="site-header__icons">
+      <a href="/cart.html" class="site-header__icon" aria-label="カート">
+        <svg width="22px" height="23px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+      </a>
+    </div>
+    <button class="mobile-nav-toggle" onclick="document.getElementById('siteNav').classList.toggle('open')" aria-label="メニュー">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- Checkout Page -->
+  <div class="product-page">
+    <div class="product-container">
+      <nav class="breadcrumb">
+        <a href="/cart.html">カート</a> <span>›</span>
+        <span>お会計</span>
+      </nav>
+
+      <div class="checkout-page">
+        <div id="emptyCart" class="cart-empty" style="display:none;">
+          <p class="cart-empty__text">カートに商品がありません。</p>
+          <a href="/#ec-section" class="cart-empty__btn">商品一覧に戻る</a>
+        </div>
+
+        <div class="checkout-layout" id="checkoutLayout" style="display:none;">
+
+          <!-- Left: Forms -->
+          <div class="checkout-main">
+
+            <h1 class="checkout-page__heading">お会計</h1>
+
+            <!-- Express checkout -->
+            <div class="express-checkout">
+              <button class="express-btn express-btn--square" id="squarePayExpress" onclick="document.getElementById('paymentCardBox').scrollIntoView({behavior:'smooth'})">カード決済</button>
+              <button class="express-btn express-btn--apple" id="applePayBtn"> Apple Pay</button>
+              <button class="express-btn express-btn--google" id="googlePayBtn">G Pay</button>
+            </div>
+
+            <div class="checkout-divider"><span>または</span></div>
+
+            <!-- Contact -->
+            <section class="checkout-section">
+              <h2 class="checkout-section__title">連絡先</h2>
+              <div class="checkout-form">
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field" style="flex: 0 0 120px;">
+                    <select id="countryCode" class="checkout-form__select-narrow">
+                      <option value="+81" selected>+81 日本</option>
+                    </select>
+                  </div>
+                  <div class="checkout-form__field">
+                    <input type="tel" id="phone" placeholder="電話番号" required>
+                  </div>
+                </div>
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field checkout-form__field--full">
+                    <input type="email" id="email" placeholder="注文書 / レシート受取用メールアドレス" required>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Shipping Address -->
+            <section class="checkout-section">
+              <h2 class="checkout-section__title">お届け先住所</h2>
+              <div class="checkout-form">
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field">
+                    <input type="text" id="lastName" placeholder="姓" required>
+                  </div>
+                  <div class="checkout-form__field">
+                    <input type="text" id="firstName" placeholder="名" required>
+                  </div>
+                </div>
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field checkout-form__field--full">
+                    <select id="country" class="checkout-form__select-narrow">
+                      <option value="日本" selected>日本</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field" style="flex: 0 0 140px;">
+                    <input type="text" id="zip" placeholder="郵便番号" maxlength="8" required>
+                  </div>
+                  <div class="checkout-form__field">
+                    <select id="prefecture" required>
+                      <option value="">都道府県</option>
+                      <option>北海道</option><option>青森県</option><option>岩手県</option>
+                      <option>宮城県</option><option>秋田県</option><option>山形県</option>
+                      <option>福島県</option><option>茨城県</option><option>栃木県</option>
+                      <option>群馬県</option><option>埼玉県</option><option>千葉県</option>
+                      <option>東京都</option><option>神奈川県</option><option>新潟県</option>
+                      <option>富山県</option><option>石川県</option><option>福井県</option>
+                      <option>山梨県</option><option>長野県</option><option>岐阜県</option>
+                      <option>静岡県</option><option>愛知県</option><option>三重県</option>
+                      <option>滋賀県</option><option>京都府</option><option>大阪府</option>
+                      <option>兵庫県</option><option>奈良県</option><option>和歌山県</option>
+                      <option>鳥取県</option><option>島根県</option><option>岡山県</option>
+                      <option>広島県</option><option>山口県</option><option>徳島県</option>
+                      <option>香川県</option><option>愛媛県</option><option>高知県</option>
+                      <option>福岡県</option><option>佐賀県</option><option>長崎県</option>
+                      <option>熊本県</option><option>大分県</option><option>宮崎県</option>
+                      <option>鹿児島県</option><option>沖縄県</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field checkout-form__field--full">
+                    <input type="text" id="address1" placeholder="市区町村" required>
+                  </div>
+                </div>
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field checkout-form__field--full">
+                    <input type="text" id="address2" placeholder="番地" required>
+                  </div>
+                </div>
+                <div class="checkout-form__row">
+                  <div class="checkout-form__field checkout-form__field--full">
+                    <input type="text" id="address3" placeholder="アパート、マンション名、階数など">
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Shipping Method -->
+            <section class="checkout-section">
+              <h2 class="checkout-section__title">配送方法</h2>
+              <div class="checkout-shipping-info">
+                <p>利用可能な配送方法を確認するには有効な住所を入力してください</p>
+              </div>
+              <div class="checkout-shipping-method" id="shippingMethod" style="display:none;">
+                <label class="shipping-radio">
+                  <input type="radio" name="shipping" value="standard" checked>
+                  <span class="shipping-radio__text">配送（一律 ¥770）</span>
+                </label>
+              </div>
+            </section>
+
+            <!-- Payment -->
+            <section class="checkout-section">
+              <h2 class="checkout-section__title">支払い</h2>
+              <p class="checkout-section__sub">すべての処理は安全かつ暗号化されて行われます</p>
+              <div class="checkout-payment-card" id="paymentCardBox">
+                <div class="checkout-payment-card__header">
+                  <span class="checkout-payment-card__label">支払いカード</span>
+                  <svg width="20" height="16" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="22" height="16" rx="2"/><line x1="1" y1="6" x2="23" y2="6"/></svg>
+                  <select class="checkout-payment-card__country"><option>日本</option></select>
+                </div>
+                <div id="square-card-container" class="checkout-payment-card__form"></div>
+              </div>
+              <div id="square-payment-status" class="square-checkout__status"></div>
+            </section>
+
+          </div>
+
+          <!-- Right: Order Summary -->
+          <div class="checkout-sidebar">
+            <div class="checkout-sidebar__inner">
+              <div class="checkout-sidebar__header" onclick="toggleOrderItems()">
+                <h2 class="checkout-sidebar__title" id="orderCount">ご注文内容</h2>
+                <span class="checkout-sidebar__toggle">▾</span>
+              </div>
+              <div id="orderItems" class="checkout-order-items"></div>
+
+              <div class="checkout-sidebar__coupon">
+                <span class="checkout-sidebar__coupon-icon">🏷</span>
+                <input type="text" class="checkout-sidebar__coupon-input" placeholder="クーポンまたはギフトカードを...">
+              </div>
+
+              <div class="checkout-sidebar__divider"></div>
+
+              <div class="cart-summary-box">
+                <div class="cart-summary-box__row">
+                  <span>小計</span>
+                  <span id="subtotal">¥0</span>
+                </div>
+                <div class="cart-summary-box__row">
+                  <span>発送</span>
+                  <span id="shipping">¥770</span>
+                </div>
+                <div class="cart-summary-box__row">
+                  <span>税金</span>
+                  <span id="tax">¥0</span>
+                </div>
+                <div class="cart-summary-box__total">
+                  <span>注文合計</span>
+                  <span id="total">¥0</span>
+                </div>
+              </div>
+
+              <button class="cart-checkout-btn" id="placeOrderBtn">注文する ¥0</button>
+              <a href="/cart.html" class="checkout-back">‹ カートに戻る</a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom: Square trust badges -->
+        <div class="checkout-trust">
+          <div class="checkout-trust__logo">
+            <span>🔒 Squareによる安全なお会計</span>
+          </div>
+          <div class="checkout-trust__badges">
+            <img src="images/payment/apple-pay.svg" alt="Apple Pay" height="24">
+            <img src="images/payment/google-pay.svg" alt="Google Pay" height="24">
+            <img src="images/payment/visa.svg" alt="Visa" height="24">
+            <img src="images/payment/mastercard.svg" alt="Mastercard" height="24">
+            <img src="images/payment/amex.svg" alt="American Express" height="24">
+            <img src="images/payment/discover.svg" alt="Discover" height="24">
+            <img src="images/payment/jcb.svg" alt="JCB" height="24">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-footer__sns">
+      <div class="site-footer__sns-title">SNS</div>
+      <ul class="site-footer__sns-icons">
+        <li><a href="https://www.facebook.com/voreas.hokkaido/" target="_blank" rel="noopener"><img src="images/icon-fb.png" alt="Facebook"></a></li>
+        <li><a href="https://twitter.com/voreas_official" target="_blank" rel="noopener"><img src="images/icon-twitter.png" alt="Twitter"></a></li>
+        <li><a href="https://www.instagram.com/voreas_official/" target="_blank" rel="noopener"><img src="images/icon-instagram.png" alt="Instagram"></a></li>
+        <li><a href="https://www.youtube.com/channel/UCXegE460iKkJ6v40Y41inRA" target="_blank" rel="noopener"><img src="images/icon-youtube.png" alt="YouTube"></a></li>
+      </ul>
+    </div>
+    <div class="site-footer__main">
+      <ul class="site-footer__links">
+        <li><a href="https://voreas-contact.pages.dev/contact">ご利用ガイド</a></li>
+        <li><a href="https://voreas-contact.pages.dev/contact">お問い合わせフォーム</a></li>
+        <li><a href="#">利用規約</a></li>
+        <li><a href="#">プライバシーポリシー</a></li>
+        <li><a href="#">配送ポリシー</a></li>
+        <li><a href="#">返金ポリシー</a></li>
+        <li><a href="#">特定商取引法に基づく表記</a></li>
+      </ul>
+      <div class="site-footer__copyright">
+        Copyright (C) 2026 VOREAS,INC. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/square-checkout.js?v=20260831f"></script>
+  <script>
+    function toggleOrderItems() {
+      const items = document.getElementById('orderItems');
+      items.style.display = items.style.display === 'none' ? '' : 'none';
+    }
+
+    (function() {
+      const cart = getCart();
+      const emptyEl = document.getElementById('emptyCart');
+      const layoutEl = document.getElementById('checkoutLayout');
+
+      if (cart.length === 0) {
+        emptyEl.style.display = '';
+        layoutEl.style.display = 'none';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      layoutEl.style.display = '';
+
+      const SHIPPING = 770;
+      let subtotal = 0;
+
+      // Render order items
+      const itemsEl = document.getElementById('orderItems');
+      cart.forEach((item) => {
+        subtotal += item.unitPrice * item.quantity;
+        const imageHtml = item.imageUrl
+          ? `<img src="${item.imageUrl}" alt="${item.name}" class="checkout-item__img">`
+          : `<div class="checkout-item__img checkout-item__img--placeholder"></div>`;
+        const playerText = item.player ? `／${item.player}` : '';
+        const div = document.createElement('div');
+        div.className = 'checkout-order-item';
+        div.innerHTML = `
+          <div class="checkout-item__image">${imageHtml}</div>
+          <div class="checkout-item__info">
+            <p class="checkout-item__name">${item.name}</p>
+            <p class="checkout-item__meta">${item.size}${playerText} ×${item.quantity}</p>
+          </div>
+          <div class="checkout-item__price">${formatPrice(item.unitPrice * item.quantity)}</div>
+        `;
+        itemsEl.appendChild(div);
+      });
+
+      const total = subtotal + SHIPPING;
+      document.getElementById('subtotal').textContent = formatPrice(subtotal);
+      document.getElementById('shipping').textContent = formatPrice(SHIPPING);
+      document.getElementById('tax').textContent = formatPrice(0);
+      document.getElementById('total').textContent = formatPrice(total);
+      document.getElementById('orderCount').textContent = `ご注文内容（${cart.length}点）`;
+      document.getElementById('placeOrderBtn').textContent = `注文する ${formatPrice(total)}`;
+
+      // Show shipping method
+      document.getElementById('shippingMethod').style.display = '';
+
+      // --- Square SDK ---
+      let card = null;
+      let payments = null;
+
+      (async () => {
+        if (!window.Square) {
+          await loadScript('https://web.squarecdn.com/v1/square.js').catch(() =>
+            loadScript('https://sandbox.web.squarecdn.com/v1/square.js')
+          );
+        }
+        if (!window.Square) {
+          console.log('Square SDK failed to load');
+          return;
+        }
+
+        payments = window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION_ID);
+
+        // Initialize card payment
+        try {
+          card = await payments.card();
+          await card.attach('#square-card-container');
+        } catch (e) {
+          console.log('Square card init failed:', e);
+        }
+
+        // Apple Pay / Google Pay are initialized on click with paymentRequest
+        // (total amount is needed for the request)
+      })();
+
+      // Build paymentRequest from current cart total
+      function buildPaymentRequest() {
+        return payments.paymentRequest({
+          countryCode: 'JP',
+          currencyCode: 'JPY',
+          total: {
+            amount: String(total),
+            label: 'VOREAS MEGASTORE',
+            pending: false,
+          },
+        });
+      }
+
+      // Apple Pay button click handler
+      document.getElementById('applePayBtn').addEventListener('click', async () => {
+        if (!payments) {
+          alert('決済システムの初期化をお待ちください。少し経ってから再度お試しください。');
+          return;
+        }
+        try {
+          const paymentRequest = buildPaymentRequest();
+          const applePayMethod = await payments.applePay(paymentRequest);
+          await processExpressPayment(applePayMethod, 'Apple Pay');
+        } catch (e) {
+          console.error('Apple Pay error:', e);
+          alert('Apple Payの初期化に失敗しました: ' + (e.message || e) + '\n\nカード決済をご利用ください。');
+        }
+      });
+
+      // Google Pay button click handler
+      document.getElementById('googlePayBtn').addEventListener('click', async () => {
+        if (!payments) {
+          alert('決済システムの初期化をお待ちください。少し経ってから再度お試しください。');
+          return;
+        }
+        try {
+          const paymentRequest = buildPaymentRequest();
+          const googlePayMethod = await payments.googlePay(paymentRequest);
+          await processExpressPayment(googlePayMethod, 'Google Pay');
+        } catch (e) {
+          console.error('Google Pay error:', e);
+          alert('Google Payの初期化に失敗しました: ' + (e.message || e) + '\n\nカード決済をご利用ください。');
+        }
+      });
+
+      // Express payment (Apple Pay / Google Pay)
+      async function processExpressPayment(paymentMethod, methodName) {
+        const statusEl = document.getElementById('square-payment-status');
+        statusEl.innerHTML = `<p class="square-checkout__processing">${methodName}決済処理中...</p>`;
+
+        try {
+          const result = await paymentMethod.tokenize();
+          if (result.status === 'OK') {
+            // Use the same flow as card payment
+            await submitPayment(result.token, methodName);
+          } else {
+            let errorMsg = `${methodName}の認証に失敗しました。`;
+            if (result.errors && result.errors.length > 0) {
+              errorMsg = result.errors.map(e => e.message).join(', ');
+            }
+            statusEl.innerHTML = `<p class="square-checkout__error">${errorMsg}</p>`;
+          }
+        } catch (e) {
+          statusEl.innerHTML = `<p class="square-checkout__error">${methodName}エラー: ${e.message}</p>`;
+        }
+      }
+
+      // Shared payment submission
+      async function submitPayment(sourceId, paymentMethod) {
+        const btn = document.getElementById('placeOrderBtn');
+        const statusEl = document.getElementById('square-payment-status');
+        btn.disabled = true;
+        btn.textContent = '決済処理中...';
+        statusEl.innerHTML = '<p class="square-checkout__processing">お待ちください...</p>';
+
+        const name = document.getElementById('lastName').value + ' ' + document.getElementById('firstName').value;
+        const email = document.getElementById('email').value;
+        const zip = document.getElementById('zip').value;
+        const pref = document.getElementById('prefecture').value;
+        const addr1 = document.getElementById('address1').value;
+        const addr2 = document.getElementById('address2').value;
+        const addr3 = document.getElementById('address3').value;
+        const phone = document.getElementById('phone').value;
+
+        // Check required fields (for express, may not be filled yet)
+        const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
+        for (const id of fields) {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) {
+            el.focus();
+            alert('必須項目を入力してください。');
+            btn.disabled = false;
+            btn.textContent = `注文する ${formatPrice(total)}`;
+            return;
+          }
+        }
+
+        const itemNotes = cart.map(item =>
+          `${item.name} [${item.size}${item.player ? '/' + item.player : ''}] x${item.quantity}`
+        ).join(' / ');
+
+        const note = `VOREAS MEGASTORE [${paymentMethod}] - ${name} - ${itemNotes} - Ship: ${zip} ${pref}${addr1} ${addr2} ${addr3} - Tel:${phone} - Email:${email}`;
+        const turnstileToken = sessionStorage.getItem('turnstile_token') || '';
+
+        try {
+          const res = await fetch('/api/payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sourceId,
+              amount: total,
+              currency: 'JPY',
+              note,
+              turnstileToken,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            sessionStorage.setItem('last_order', JSON.stringify({
+              paymentId: data.paymentId,
+              receiptUrl: data.receiptUrl || '',
+              total: total,
+              name: name,
+              email: email,
+              items: cart.map(i => ({
+                name: i.name,
+                size: i.size,
+                player: i.player,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+              })),
+            }));
+            clearCart();
+            window.location.href = '/order-complete.html';
+          } else {
+            let errMsg = data.error || '処理に失敗しました';
+            if (data.details) {
+              errMsg = data.details.map(d => d.detail || d.code).join(', ');
+            }
+            statusEl.innerHTML = `<p class="square-checkout__error">決済エラー: ${errMsg}</p>`;
+            btn.disabled = false;
+            btn.textContent = `注文する ${formatPrice(total)}`;
+          }
+        } catch (e) {
+          statusEl.innerHTML = `<p class="square-checkout__error">エラーが発生しました: ${e.message}</p>`;
+          btn.disabled = false;
+          btn.textContent = `注文する ${formatPrice(total)}`;
+        }
+      }
+
+      // --- Place order (card) ---
+      document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+        const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
+        for (const id of fields) {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) {
+            el.focus();
+            alert('必須項目を入力してください。');
+            return;
+          }
+        }
+
+        // Get Turnstile token from cart page
+        const turnstileToken = sessionStorage.getItem('turnstile_token');
+        if (!turnstileToken) {
+          alert('認証が確認できません。カートページに戻ってください。');
+          return;
+        }
+
+        if (!card) {
+          alert('決済システムの初期化に失敗しました。ページを再読み込みしてください。');
+          return;
+        }
+
+        const btn = document.getElementById('placeOrderBtn');
+        const statusEl = document.getElementById('square-payment-status');
+        btn.disabled = true;
+        btn.textContent = '決済処理中...';
+        statusEl.innerHTML = '<p class="square-checkout__processing">お待ちください...</p>';
+
+        try {
+          const result = await card.tokenize();
+          if (result.status !== 'OK') {
+            let errorMsg = 'カード情報の入力に誤りがあります。';
+            if (result.errors && result.errors.length > 0) {
+              errorMsg = result.errors.map(e => e.message).join(', ');
+            }
+            statusEl.innerHTML = `<p class="square-checkout__error">${errorMsg}</p>`;
+            btn.disabled = false;
+            btn.textContent = `注文する ${formatPrice(total)}`;
+            return;
+          }
+
+          // Submit payment using shared function
+          await submitPayment(result.token, 'Card');
+        } catch (e) {
+          statusEl.innerHTML = `<p class="square-checkout__error">エラーが発生しました: ${e.message}</p>`;
+          btn.disabled = false;
+          btn.textContent = `注文する ${formatPrice(total)}`;
+        }
+      });
+    })();
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+  </script>
+
+</body>
+</html>
