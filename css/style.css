@@ -123,7 +123,7 @@ a {
 .lp-hero__bg {
   position: absolute;
   inset: 0;
-  background: url('/images/season-bg.jpg') center center / cover no-repeat;
+  background: url('/images/season-motif-bg.jpg') center center / cover no-repeat;
   z-index: 0;
 }
 
@@ -137,7 +137,7 @@ a {
   width: 47vw;
   height: 47vw;
   max-width: 940px;
-  background: url('/images/voreas-mark-white.png') center center / contain no-repeat;
+  background: url('/images/voreas-10th-mark.png') center center / contain no-repeat;
   opacity: 0.1;
   z-index: 1;
   pointer-events: none;
