@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (body.dataset.page === 'cart') return;
 
   let squareProduct = null;
+  let allSquareVariations = [];
   let basePrice = getCurrentBasePrice();
   let currentVariation = null;
   let selectedSize = null;
@@ -131,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await res.json();
       if (data.found && data.products.length > 0) {
         squareProduct = data.products[0];
-        applySquareProduct(squareProduct);
+        applySquareProduct(squareProduct, data.products);
         basePrice = squareProduct.variations[0]?.price || basePrice;
       }
     }
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return 27500;
   }
 
-  function applySquareProduct(product) {
+  function applySquareProduct(product, allProducts) {
     if (product.imageUrl) {
       const mainImg = document.getElementById('mainImage');
       if (mainImg) {
@@ -171,7 +172,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         priceEl.textContent = formatPrice(firstVar.price);
         basePrice = firstVar.price;
       }
-      updateSizeButtons(product.variations);
+      // Collect all variations from all products (all players)
+      const allVariations = (allProducts || [product]).flatMap(p =>
+        (p.variations || []).map(v => ({...v, productName: p.name}))
+      );
+      allSquareVariations = allVariations;
+      updateSizeButtons(allVariations);
+      updatePlayerOptions(allProducts || [product]);
     }
     if (product.description) {
       const descEl = document.querySelector('.product-description__concept p');
@@ -183,20 +190,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateSizeButtons(variations) {
     const sizeContainer = document.querySelector('.product-form__sizes');
     if (!sizeContainer) return;
-    const sizeVariations = variations.filter(v =>
-      /^(SS|S|M|L|XL|2XL|3XL|100|120|140|160|O\/S|XS)$/i.test(v.name.trim())
-    );
-    if (sizeVariations.length === 0) return;
+    // Extract unique sizes from all variations — include 2S
+    const sizeOrder = ['2S', 'SS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '100', '120', '140', '160', 'O/S'];
+    const sizeSet = new Set();
+    variations.forEach(v => {
+      const name = v.name.trim();
+      if (/^(2S|SS|XS|S|M|L|XL|2XL|3XL|100|120|140|160|O\/S)$/i.test(name)) {
+        sizeSet.add(name);
+      }
+    });
+    if (sizeSet.size === 0) return;
+
+    // Sort sizes by predefined order
+    const sortedSizes = Array.from(sizeSet).sort((a, b) => {
+      const ai = sizeOrder.indexOf(a.toUpperCase());
+      const bi = sizeOrder.indexOf(b.toUpperCase());
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    });
 
     sizeContainer.innerHTML = '';
-    sizeVariations.forEach(v => {
+    sortedSizes.forEach(sizeName => {
+      // Find a variation for this size (use first matching)
+      const v = variations.find(vv => vv.name.trim() === sizeName);
       const btn = document.createElement('button');
       btn.className = 'size-btn';
-      btn.dataset.size = v.name;
-      btn.dataset.variationId = v.id;
-      btn.dataset.price = v.price;
-      btn.textContent = v.name;
-      if (!v.sellable) {
+      btn.dataset.size = sizeName;
+      btn.dataset.variationId = v ? v.id : '';
+      btn.dataset.price = v ? v.price : basePrice;
+      btn.textContent = sizeName;
+      if (v && !v.sellable) {
         btn.classList.add('sold-out');
         btn.disabled = true;
         btn.title = '売り切れ';
@@ -204,12 +226,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
         this.classList.add('selected');
-        selectedSize = v.name;
-        currentVariation = v;
-        if (v.price) {
-          basePrice = v.price;
+        selectedSize = sizeName;
+        updateVariationForSelection(allSquareVariations);
+        const priceAttr = this.dataset.price;
+        if (priceAttr) {
+          basePrice = parseInt(priceAttr);
           const priceEl = document.querySelector('.product-info__price-value');
-          if (priceEl) priceEl.textContent = formatPrice(v.price);
+          if (priceEl) priceEl.textContent = formatPrice(basePrice);
         }
         updateTotal();
       });
@@ -222,6 +245,88 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (totalEl) {
       const total = basePrice * quantity;
       totalEl.textContent = formatPrice(total) + '（税込）';
+    }
+  }
+
+  function updatePlayerOptions(products) {
+    const playerSelect = document.getElementById('playerSelect');
+    if (!playerSelect) return;
+
+    // Extract player info from product names
+    // Product names from Square look like "2026-27 オーセンティックユニフォーム HOME #2 中道優斗"
+    // or "#1 WOLVES（サポーターナンバー）"
+    const players = [];
+    const playerMap = new Map(); // dedup by player identifier
+
+    products.forEach(p => {
+      const name = p.name || '';
+      // Try to extract player number and name from the product name
+      // Patterns: "#数字 名前" or "数字 名前"
+      const match = name.match(/#?(\d+)\s+(.+)$/);
+      if (match) {
+        const num = match[1];
+        const playerName = match[2].trim();
+        const key = `#${num}`;
+        if (!playerMap.has(key)) {
+          playerMap.set(key, {num, name: playerName, id: p.id});
+        }
+      }
+    });
+
+    // Sort by number
+    const sortedPlayers = Array.from(playerMap.values()).sort((a, b) => parseInt(a.num) - parseInt(b.num));
+
+    // Build options
+    playerSelect.innerHTML = '<option value="">選手を選択してください</option>';
+    sortedPlayers.forEach(p => {
+      const option = document.createElement('option');
+      const value = `${p.name}/#${p.num}`;
+      option.value = value;
+      // WOLVES gets special label
+      if (p.name.toUpperCase().includes('WOLVES')) {
+        option.textContent = `WOLVES（サポーターナンバー）/ #${p.num}`;
+      } else {
+        option.textContent = `${p.name} / #${p.num}`;
+      }
+      option.dataset.productId = p.id;
+      option.dataset.playerNum = p.num;
+      option.dataset.playerName = p.name;
+      playerSelect.appendChild(option);
+    });
+
+    // Update selectedPlayer on change
+    playerSelect.onchange = () => {
+      selectedPlayer = playerSelect.value;
+      updateVariationForSelection(allSquareVariations);
+    };
+  }
+
+  function updateVariationForSelection(variations) {
+    if (!variations || variations.length === 0) return;
+    if (!selectedSize) return;
+
+    // Find the product that matches the selected player
+    const playerSelect = document.getElementById('playerSelect');
+    const selectedOption = playerSelect ? playerSelect.selectedOptions[0] : null;
+    const playerNum = selectedOption ? selectedOption.dataset.playerNum : null;
+
+    // Find variation matching both size and player
+    const match = variations.find(v => {
+      const vSize = v.name.trim();
+      const vSizeMatch = vSize === selectedSize;
+      // Check if this variation belongs to the selected player's product
+      const vPlayerMatch = playerNum ? (v.productName && v.productName.includes(`#${playerNum}`)) : true;
+      return vSizeMatch && vPlayerMatch;
+    });
+
+    if (match) {
+      currentVariation = match;
+      if (match.price) {
+        basePrice = match.price;
+        const priceEl = document.querySelector('.product-info__price-value');
+        if (priceEl) priceEl.textContent = formatPrice(basePrice);
+        updateTotal();
+      }
     }
   }
 
