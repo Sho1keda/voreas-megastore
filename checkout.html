@@ -335,6 +335,8 @@
       // --- Square SDK ---
       let card = null;
       let payments = null;
+      let expressPaymentToken = null; // Store Apple Pay / Google Pay token
+      let expressPaymentMethod = null; // 'Apple Pay' or 'Google Pay'
 
       (async () => {
         if (!window.Square) {
@@ -409,13 +411,25 @@
       // Express payment (Apple Pay / Google Pay)
       async function processExpressPayment(paymentMethod, methodName) {
         const statusEl = document.getElementById('square-payment-status');
-        statusEl.innerHTML = `<p class="square-checkout__processing">${methodName}決済処理中...</p>`;
 
         try {
           const result = await paymentMethod.tokenize();
           if (result.status === 'OK') {
-            // Use the same flow as card payment
-            await submitPayment(result.token, methodName);
+            // Store the token — actual submission happens after form fields are filled
+            expressPaymentToken = result.token;
+            expressPaymentMethod = methodName;
+            statusEl.innerHTML = `<p class="square-checkout__processing">${methodName}認証完了！連絡先・お届け先を入力して「注文する」ボタンを押してください。</p>`;
+            // Update place order button to show express method
+            const btn = document.getElementById('placeOrderBtn');
+            btn.textContent = `注文する（${methodName}） ${formatPrice(total)}`;
+            // Scroll to form
+            document.querySelector('.checkout-main').scrollIntoView({behavior:'smooth'});
+            // Focus first empty required field
+            const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
+            for (const id of fields) {
+              const el = document.getElementById(id);
+              if (!el.value.trim()) { el.focus(); break; }
+            }
           } else {
             let errorMsg = `${methodName}の認証に失敗しました。`;
             if (result.errors && result.errors.length > 0) {
@@ -444,19 +458,6 @@
         const addr2 = document.getElementById('address2').value;
         const addr3 = document.getElementById('address3').value;
         const phone = document.getElementById('phone').value;
-
-        // Check required fields (for express, may not be filled yet)
-        const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
-        for (const id of fields) {
-          const el = document.getElementById(id);
-          if (!el.value.trim()) {
-            el.focus();
-            alert('必須項目を入力してください。');
-            btn.disabled = false;
-            btn.textContent = `注文する ${formatPrice(total)}`;
-            return;
-          }
-        }
 
         const itemNotes = cart.map(item =>
           `${item.name} [${item.size}${item.player ? '/' + item.player : ''}] x${item.quantity}`
@@ -513,7 +514,7 @@
         }
       }
 
-      // --- Place order (card) ---
+      // --- Place order (card or express) ---
       document.getElementById('placeOrderBtn').addEventListener('click', async () => {
         const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
         for (const id of fields) {
@@ -532,13 +533,23 @@
           return;
         }
 
+        const btn = document.getElementById('placeOrderBtn');
+        const statusEl = document.getElementById('square-payment-status');
+
+        // If Apple Pay / Google Pay token exists, use it directly
+        if (expressPaymentToken) {
+          btn.disabled = true;
+          btn.textContent = '決済処理中...';
+          statusEl.innerHTML = '<p class="square-checkout__processing">お待ちください...</p>';
+          await submitPayment(expressPaymentToken, expressPaymentMethod);
+          return;
+        }
+
         if (!card) {
           alert('決済システムの初期化に失敗しました。ページを再読み込みしてください。');
           return;
         }
 
-        const btn = document.getElementById('placeOrderBtn');
-        const statusEl = document.getElementById('square-payment-status');
         btn.disabled = true;
         btn.textContent = '決済処理中...';
         statusEl.innerHTML = '<p class="square-checkout__processing">お待ちください...</p>';
