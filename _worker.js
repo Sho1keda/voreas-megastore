@@ -277,26 +277,32 @@ async function handlePayment(request, env) {
     // Step 4: Write to Google Spreadsheet (best-effort)
     if (env.GOOGLE_SHEET_WEBHOOK_URL && items) {
       try {
-        const sheetRows = items.map(item => ({
-          timestamp: new Date().toISOString(),
+        const sheetPayload = {
           paymentId: data.payment.id,
-          orderId: orderId || '',
-          customerName: customerName || '',
+          paymentMethod: paymentMethod || '',
+          name: customerName || '',
           email: customerEmail || '',
           phone: shippingAddress?.phone || '',
-          itemName: item.name || '',
-          size: item.size || '',
-          player: item.player || '',
-          quantity: item.quantity || 1,
-          unitPrice: item.unitPrice || 0,
-          total: (item.unitPrice || 0) * (item.quantity || 1),
-          address: shippingAddress ? `${shippingAddress.zip || ''} ${shippingAddress.prefecture || ''}${shippingAddress.address1 || ''} ${shippingAddress.address2 || ''} ${shippingAddress.address3 || ''}` : '',
-        }));
+          zip: shippingAddress?.zip || '',
+          prefecture: shippingAddress?.prefecture || '',
+          address1: shippingAddress?.address1 || '',
+          address2: shippingAddress?.address2 || '',
+          address3: shippingAddress?.address3 || '',
+          total: Math.round(amount),
+          receiptUrl: data.payment.receipt_url || '',
+          items: items.map(item => ({
+            name: item.name || '',
+            size: item.size || '',
+            player: item.player || '',
+            quantity: item.quantity || 1,
+            unitPrice: item.unitPrice || 0,
+          })),
+        };
 
         await fetch(env.GOOGLE_SHEET_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rows: sheetRows, tab: 'オーセン' }),
+          body: JSON.stringify(sheetPayload),
         });
       } catch { /* sheet write is best-effort */ }
     }
