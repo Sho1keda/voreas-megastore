@@ -899,6 +899,12 @@
   transform: scale(0.98);
 }
 
+.express-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Divider */
 .checkout-divider {
   text-align: center;

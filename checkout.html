@@ -65,9 +65,10 @@
             <!-- Express checkout -->
             <div class="express-checkout">
               <button class="express-btn express-btn--square" id="squarePayExpress" onclick="document.getElementById('paymentCardBox').scrollIntoView({behavior:'smooth'})">カード決済</button>
-              <button class="express-btn express-btn--apple" id="applePayBtn"> Apple Pay</button>
-              <button class="express-btn express-btn--google" id="googlePayBtn">G Pay</button>
+              <button class="express-btn express-btn--apple" id="applePayBtn" disabled> Apple Pay</button>
+              <button class="express-btn express-btn--google" id="googlePayBtn" disabled>G Pay</button>
             </div>
+            <p class="express-checkout__hint" id="expressHint" style="text-align:center;font-size:13px;color:#888;margin:8px 0 0;">※ Apple Pay / G Pay は連絡先・お届け先入力後にご利用いただけます</p>
 
             <div class="checkout-divider"><span>または</span></div>
 
@@ -335,8 +336,6 @@
       // --- Square SDK ---
       let card = null;
       let payments = null;
-      let expressPaymentToken = null; // Store Apple Pay / Google Pay token
-      let expressPaymentMethod = null; // 'Apple Pay' or 'Google Pay'
 
       (async () => {
         if (!window.Square) {
@@ -376,6 +375,34 @@
         });
       }
 
+      // Validate required fields — returns true if all filled
+      function validateRequiredFields() {
+        const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
+        for (const id of fields) {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) return false;
+        }
+        return true;
+      }
+
+      // Enable/disable express buttons based on form completion
+      function updateExpressButtons() {
+        const ready = validateRequiredFields();
+        const appleBtn = document.getElementById('applePayBtn');
+        const googleBtn = document.getElementById('googlePayBtn');
+        const hint = document.getElementById('expressHint');
+        appleBtn.disabled = !ready;
+        googleBtn.disabled = !ready;
+        if (hint) hint.style.display = ready ? 'none' : '';
+      }
+
+      // Attach input listeners to required fields
+      ['lastName','firstName','zip','prefecture','address1','address2','phone','email'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateExpressButtons);
+        if (el) el.addEventListener('change', updateExpressButtons);
+      });
+
       // Apple Pay button click handler
       document.getElementById('applePayBtn').addEventListener('click', async () => {
         if (!payments) {
@@ -408,37 +435,29 @@
         }
       });
 
-      // Express payment (Apple Pay / Google Pay)
+      // Express payment (Apple Pay / Google Pay) — direct submit after auth
       async function processExpressPayment(paymentMethod, methodName) {
         const statusEl = document.getElementById('square-payment-status');
+        const btn = document.getElementById(methodName === 'Apple Pay' ? 'applePayBtn' : 'googlePayBtn');
+        btn.disabled = true;
+        statusEl.innerHTML = `<p class="square-checkout__processing">${methodName}決済処理中...</p>`;
 
         try {
           const result = await paymentMethod.tokenize();
           if (result.status === 'OK') {
-            // Store the token — actual submission happens after form fields are filled
-            expressPaymentToken = result.token;
-            expressPaymentMethod = methodName;
-            statusEl.innerHTML = `<p class="square-checkout__processing">${methodName}認証完了！連絡先・お届け先を入力して「注文する」ボタンを押してください。</p>`;
-            // Update place order button to show express method
-            const btn = document.getElementById('placeOrderBtn');
-            btn.textContent = `注文する（${methodName}） ${formatPrice(total)}`;
-            // Scroll to form
-            document.querySelector('.checkout-main').scrollIntoView({behavior:'smooth'});
-            // Focus first empty required field
-            const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
-            for (const id of fields) {
-              const el = document.getElementById(id);
-              if (!el.value.trim()) { el.focus(); break; }
-            }
+            // Submit payment directly — form fields are already validated
+            await submitPayment(result.token, methodName);
           } else {
             let errorMsg = `${methodName}の認証に失敗しました。`;
             if (result.errors && result.errors.length > 0) {
               errorMsg = result.errors.map(e => e.message).join(', ');
             }
             statusEl.innerHTML = `<p class="square-checkout__error">${errorMsg}</p>`;
+            btn.disabled = false;
           }
         } catch (e) {
           statusEl.innerHTML = `<p class="square-checkout__error">${methodName}エラー: ${e.message}</p>`;
+          btn.disabled = false;
         }
       }
 
@@ -514,7 +533,7 @@
         }
       }
 
-      // --- Place order (card or express) ---
+      // --- Place order (card only) ---
       document.getElementById('placeOrderBtn').addEventListener('click', async () => {
         const fields = ['lastName','firstName','zip','prefecture','address1','address2','phone','email'];
         for (const id of fields) {
@@ -533,23 +552,13 @@
           return;
         }
 
-        const btn = document.getElementById('placeOrderBtn');
-        const statusEl = document.getElementById('square-payment-status');
-
-        // If Apple Pay / Google Pay token exists, use it directly
-        if (expressPaymentToken) {
-          btn.disabled = true;
-          btn.textContent = '決済処理中...';
-          statusEl.innerHTML = '<p class="square-checkout__processing">お待ちください...</p>';
-          await submitPayment(expressPaymentToken, expressPaymentMethod);
-          return;
-        }
-
         if (!card) {
           alert('決済システムの初期化に失敗しました。ページを再読み込みしてください。');
           return;
         }
 
+        const btn = document.getElementById('placeOrderBtn');
+        const statusEl = document.getElementById('square-payment-status');
         btn.disabled = true;
         btn.textContent = '決済処理中...';
         statusEl.innerHTML = '<p class="square-checkout__processing">お待ちください...</p>';
