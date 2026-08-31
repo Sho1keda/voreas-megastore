@@ -115,7 +115,7 @@
                 </div>
                 <div class="checkout-form__row">
                   <div class="checkout-form__field" style="flex: 0 0 140px;">
-                    <input type="text" id="zip" placeholder="郵便番号" maxlength="8" required>
+                    <input type="text" id="zip" placeholder="郵便番号" maxlength="8" required onInput="autoAddress(event)">
                   </div>
                   <div class="checkout-form__field">
                     <select id="prefecture" required>
@@ -279,6 +279,37 @@
 
   <script src="js/square-checkout-v2.js?v=3"></script>
   <script>
+    // Auto-fill address from postal code
+    async function autoAddress(event) {
+      const zip = event.target.value.replace(/[^0-9]/g, '');
+      if (zip.length !== 7) return;
+      
+      try {
+        const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zip}`);
+        const data = await res.json();
+        
+        if (data.status === 200 && data.results && data.results.length > 0) {
+          const r = data.results[0];
+          const prefSelect = document.getElementById('prefecture');
+          const addr1 = document.getElementById('address1');
+          
+          if (prefSelect) {
+            for (let i = 0; i < prefSelect.options.length; i++) {
+              if (prefSelect.options[i].text === r.address1) {
+                prefSelect.selectedIndex = i;
+                break;
+              }
+            }
+          }
+          if (addr1) addr1.value = r.address2 + r.address3;
+          
+          updateExpressButtons();
+        }
+      } catch (e) {
+        console.log('Auto address failed:', e);
+      }
+    }
+
     function toggleOrderItems() {
       const items = document.getElementById('orderItems');
       items.style.display = items.style.display === 'none' ? '' : 'none';
