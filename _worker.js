@@ -141,7 +141,7 @@ async function handlePayment(request, env) {
     return json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const { sourceId, amount, currency, note, variationId, variationName, quantity, turnstileToken } = body;
+  const { sourceId, amount, currency, note, turnstileToken, items, customerEmail, customerName, shippingAddress } = body;
 
   if (!sourceId || !amount) {
     return json({ error: 'Missing required fields: sourceId, amount' }, 400);
@@ -171,12 +171,77 @@ async function handlePayment(request, env) {
   const idempotencyKey = crypto.randomUUID();
 
   try {
+    // Step 1: Create a Square Order with line items tied to catalog variations
+    let orderId = null;
+    
+    if (items && items.length > 0) {
+      const lineItems = items.map(item => ({
+        catalog_object_id: item.variationId || undefined,
+        quantity: String(item.quantity || 1),
+        ...(item.variationId ? {} : { 
+          name: item.name || 'Item',
+          base_price_money: { amount: Math.round(item.unitPrice || 0), currency: currency || 'JPY' },
+        }),
+        ...(item.name ? { name: item.name } : {}),
+        note: item.player ? `選手: ${item.player}, サイズ: ${item.size}` : undefined,
+      })).filter(li => li.catalog_object_id || li.name);
+
+      if (lineItems.length > 0) {
+        const orderBody = {
+          idempotency_key: crypto.randomUUID(),
+          order: {
+            location_id: locationId,
+            line_items: lineItems,
+            ...(shippingAddress ? {
+              fulfillments: [{
+                type: 'SHIPMENT',
+                shipment_details: {
+                  recipient: {
+                    display_name: customerName || '',
+                    email_address: customerEmail || '',
+                    address: {
+                      address_line_1: shippingAddress.address1 || '',
+                      address_line_2: [shippingAddress.address2, shippingAddress.address3].filter(Boolean).join(' '),
+                      administrative_district_level_1: shippingAddress.prefecture || '',
+                      postal_code: shippingAddress.zip || '',
+                      country: 'JP',
+                    },
+                  },
+                },
+              }],
+            } : {}),
+          },
+        };
+
+        try {
+          const orderRes = await fetch(`${SQUARE_API}/orders`, {
+            method: 'POST',
+            headers: {
+              'Square-Version': SQUARE_VERSION,
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderBody),
+          });
+          const orderData = await orderRes.json();
+          if (!orderData.errors && orderData.order) {
+            orderId = orderData.order.id;
+          }
+        } catch (e) {
+          console.log('Order creation failed, falling back to simple payment:', e.message);
+        }
+      }
+    }
+
+    // Step 2: Create payment, optionally linked to the order
     const paymentBody = {
       source_id: sourceId,
       idempotency_key: idempotencyKey,
       amount_money: { amount: Math.round(amount), currency: currency || 'JPY' },
       location_id: locationId,
-      note: note || `VOREAS MEGASTORE order - ${variationName || 'item'} x${quantity || 1}`,
+      note: note || `VOREAS MEGASTORE order`,
+      ...(customerEmail ? { buyer_email_address: customerEmail } : {}),
+      ...(orderId ? { order_id: orderId } : {}),
     };
 
     const res = await fetch(`${SQUARE_API}/payments`, {
@@ -195,9 +260,51 @@ async function handlePayment(request, env) {
       return json({ error: 'Payment failed', details: data.errors }, 400);
     }
 
+    // Step 3: Send receipt email via Square if we have the email
+    if (customerEmail && data.payment.id) {
+      try {
+        await fetch(`${SQUARE_API}/payments/${data.payment.id}/complete`, {
+          method: 'POST',
+          headers: {
+            'Square-Version': SQUARE_VERSION,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch { /* receipt send is best-effort */ }
+    }
+
+    // Step 4: Write to Google Spreadsheet (best-effort)
+    if (env.GOOGLE_SHEET_WEBHOOK_URL && items) {
+      try {
+        const sheetRows = items.map(item => ({
+          timestamp: new Date().toISOString(),
+          paymentId: data.payment.id,
+          orderId: orderId || '',
+          customerName: customerName || '',
+          email: customerEmail || '',
+          phone: shippingAddress?.phone || '',
+          itemName: item.name || '',
+          size: item.size || '',
+          player: item.player || '',
+          quantity: item.quantity || 1,
+          unitPrice: item.unitPrice || 0,
+          total: (item.unitPrice || 0) * (item.quantity || 1),
+          address: shippingAddress ? `${shippingAddress.zip || ''} ${shippingAddress.prefecture || ''}${shippingAddress.address1 || ''} ${shippingAddress.address2 || ''} ${shippingAddress.address3 || ''}` : '',
+        }));
+
+        await fetch(env.GOOGLE_SHEET_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rows: sheetRows, tab: 'オーセン' }),
+        });
+      } catch { /* sheet write is best-effort */ }
+    }
+
     return json({
       success: true,
       paymentId: data.payment.id,
+      orderId: orderId,
       receiptUrl: data.payment.receipt_url || '',
       status: data.payment.status,
     });
