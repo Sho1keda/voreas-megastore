@@ -114,6 +114,14 @@
   letter-spacing: 0.05em;
 }
 
+.product-info__badge--away {
+  background: var(--voreas-black);
+}
+
+.product-info__badge--libero {
+  background: #888;
+}
+
 /* Product Form */
 .product-form {
   display: flex;
