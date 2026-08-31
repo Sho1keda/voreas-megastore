@@ -116,7 +116,6 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   overflow: hidden;
   background: var(--voreas-black);
 }
@@ -124,34 +123,58 @@ a {
 .lp-hero__bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #000 0%, #32373c 40%, var(--voreas-dark-red) 100%);
+  background: url('/images/season-bg.jpg') center center / cover no-repeat;
   z-index: 0;
 }
 
-.lp-hero__bg::after {
+/* Wolf mark + VOREAS HOKKAIDO watermark as one set */
+.lp-hero__bg::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    135deg,
-    transparent,
-    transparent 20px,
-    rgba(255,255,255,0.02) 20px,
-    rgba(255,255,255,0.02) 22px
-  );
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 47vw;
+  height: 47vw;
+  max-width: 940px;
+  background: url('/images/voreas-mark-white.png') center center / contain no-repeat;
+  opacity: 0.1;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.lp-hero__content {
+@media (max-width: 768px) {
+  .lp-hero__bg::before {
+    width: 60vw;
+    height: 60vw;
+    max-width: none;
+  }
+}
+
+.lp-hero__logo-area {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 5vh 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.lp-hero__text-area {
   position: relative;
   z-index: 2;
   text-align: center;
   color: #ffffff;
-  padding: 80px 24px;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 24px;
+  padding: 24px 24px 0;
 }
 
 .lp-hero__anniversary {
@@ -161,9 +184,9 @@ a {
   letter-spacing: 0.2em;
   color: var(--voreas-gold);
   border: 1px solid var(--voreas-gold);
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 6px 24px;
-  margin-bottom: 32px;
+  margin-bottom: 4px;
 }
 
 .lp-hero__title {
@@ -172,21 +195,27 @@ a {
   font-weight: 700;
   letter-spacing: 0.05em;
   line-height: 1;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
   text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+.lp-hero__title img {
+  display: block;
+  margin: 0 auto;
 }
 
 .lp-hero__season {
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .lp-hero__gold {
   font-size: 36px;
   font-weight: 700;
   color: var(--voreas-gold);
-  margin-bottom: 36px;
+  margin-bottom: 4px;
 }
 
 .lp-hero__btn {
@@ -197,10 +226,10 @@ a {
   font-size: 18px;
   font-weight: 700;
   border: none;
-  border-radius: 999px;
+  border-radius: 6px;
   transition: opacity 0.2s, transform 0.1s;
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
 }
 
 .lp-hero__btn:hover {
@@ -215,8 +244,9 @@ a {
 
 .lp-hero__band {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   width: 100%;
+  flex-shrink: 0;
   background: var(--voreas-gold);
   color: var(--voreas-black);
   text-align: center;
