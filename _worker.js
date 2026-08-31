@@ -322,29 +322,30 @@ async function handleRegister(request, env) {
   });
 }
 
-// ── Main entry: route /api/* to handlers, everything else to static assets ──
+// ── Main entry ──
+// Only intercept /api/* routes. Everything else goes to static assets
+// WITHOUT modification (preserving correct Content-Type headers).
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // API routes
-    if (path === '/api/products' && request.method === 'GET') {
-      return handleProducts(request, env);
-    }
-    if (path === '/api/payment' && request.method === 'POST') {
-      return handlePayment(request, env);
-    }
-    if (path === '/api/manage/register' && request.method === 'POST') {
-      return handleRegister(request, env);
-    }
-
-    // Fallback: serve static assets
-    if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
+    // Only handle API routes
+    if (path.startsWith('/api/')) {
+      if (path === '/api/products' && request.method === 'GET') {
+        return handleProducts(request, env);
+      }
+      if (path === '/api/payment' && request.method === 'POST') {
+        return handlePayment(request, env);
+      }
+      if (path === '/api/manage/register' && request.method === 'POST') {
+        return handleRegister(request, env);
+      }
+      return json({ error: 'Not found' }, 404);
     }
 
-    return new Response('Not found', { status: 404 });
+    // Non-API: pass through to ASSETS with original request (preserves Content-Type)
+    return env.ASSETS.fetch(request);
   },
 };

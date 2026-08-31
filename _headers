@@ -1,7 +1,5 @@
 /*
-  Content-Type: text/html; charset=utf-8
   Cache-Control: no-cache, no-store, must-revalidate
-  X-Content-Type-Options: nosniff
 
 /css/*
   Cache-Control: public, max-age=0, must-revalidate
