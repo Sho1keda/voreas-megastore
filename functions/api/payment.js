@@ -127,6 +127,39 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Write to Google Spreadsheet (best-effort)
+    if (env.GOOGLE_SHEET_WEBHOOK_URL && body.items) {
+      try {
+        const sheetPayload = {
+          paymentId: data.payment.id,
+          paymentMethod: body.paymentMethod || '',
+          name: body.customerName || '',
+          email: body.customerEmail || '',
+          phone: body.shippingAddress?.phone || '',
+          zip: body.shippingAddress?.zip || '',
+          prefecture: body.shippingAddress?.prefecture || '',
+          address1: body.shippingAddress?.address1 || '',
+          address2: body.shippingAddress?.address2 || '',
+          address3: body.shippingAddress?.address3 || '',
+          total: Math.round(amount),
+          receiptUrl: data.payment.receipt_url || '',
+          items: (body.items || []).map(item => ({
+            name: item.name || '',
+            size: item.size || '',
+            player: item.player || '',
+            quantity: item.quantity || 1,
+            unitPrice: item.unitPrice || 0,
+          })),
+        };
+
+        await fetch(env.GOOGLE_SHEET_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sheetPayload),
+        });
+      } catch { /* sheet write is best-effort */ }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       paymentId: data.payment.id,
