@@ -384,6 +384,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Build cart item
       const productTitle = document.querySelector('.product-info__title')?.textContent || `${productType}-${productColor}`;
       const productBadge = document.querySelector('.product-info__badge')?.textContent || '';
+      // Map color to local product image (Square doesn't have images set)
+      const colorImageMap = {
+        home: 'images/products/uniform-2026-27-red.jpg',
+        red: 'images/products/uniform-2026-27-red.jpg',
+        away: 'images/products/uniform-2026-27-black.jpg',
+        black: 'images/products/uniform-2026-27-black.jpg',
+        libero: 'images/products/uniform-2026-27-gray.jpg',
+        gray: 'images/products/uniform-2026-27-gray.jpg',
+        grey: 'images/products/uniform-2026-27-gray.jpg',
+      };
+      const fallbackImage = colorImageMap[productColor] || '';
       const cartItem = {
         productId: squareProduct?.id || `${productType}-${productColor}`,
         productType,
@@ -395,7 +406,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         quantity: quantity,
         unitPrice: basePrice,
         variationId: currentVariation?.id || '',
-        imageUrl: squareProduct?.imageUrl || '',
+        imageUrl: squareProduct?.imageUrl || fallbackImage,
       };
 
       addToCart(cartItem);
