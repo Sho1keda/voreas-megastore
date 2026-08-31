@@ -187,16 +187,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateTotal();
   }
 
+  // Parse variation name "SIZE, PLAYERNAME/#NUM" → { size, playerName, playerNum }
+  function parseVariationName(name) {
+    const trimmed = (name || '').trim();
+    // Format: "2S, NAKAMICHI/#2" or "S, WOLVES/#1"
+    const m = trimmed.match(/^([^,]+),\s*(.+?)\/#(\d+)$/);
+    if (m) return { size: m[1].trim(), playerName: m[2].trim(), playerNum: m[3] };
+    // Fallback: just a size
+    return { size: trimmed, playerName: null, playerNum: null };
+  }
+
   function updateSizeButtons(variations) {
     const sizeContainer = document.querySelector('.product-form__sizes');
     if (!sizeContainer) return;
-    // Extract unique sizes from all variations — include 2S
-    const sizeOrder = ['2S', 'SS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '100', '120', '140', '160', 'O/S'];
+    // Extract unique sizes from all variations — include 2S and kids sizes
+    const sizeOrder = ['2S', 'SS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'K.2S', 'K.S', 'K.M', 'K.L', 'K.XL', '100', '120', '140', '160', 'O/S'];
     const sizeSet = new Set();
     variations.forEach(v => {
-      const name = v.name.trim();
-      if (/^(2S|SS|XS|S|M|L|XL|2XL|3XL|100|120|140|160|O\/S)$/i.test(name)) {
-        sizeSet.add(name);
+      const parsed = parseVariationName(v.name);
+      const sz = parsed.size;
+      if (/^(2S|SS|XS|S|M|L|XL|2XL|3XL|K\.2S|K\.S|K\.M|K\.L|K\.XL|100|120|140|160|O\/S)$/i.test(sz)) {
+        sizeSet.add(sz);
       }
     });
     if (sizeSet.size === 0) return;
@@ -211,7 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     sizeContainer.innerHTML = '';
     sortedSizes.forEach(sizeName => {
       // Find a variation for this size (use first matching)
-      const v = variations.find(vv => vv.name.trim() === sizeName);
+      const v = variations.find(vv => parseVariationName(vv.name).size.toUpperCase() === sizeName.toUpperCase());
       const btn = document.createElement('button');
       btn.className = 'size-btn';
       btn.dataset.size = sizeName;
@@ -252,29 +263,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const playerSelect = document.getElementById('playerSelect');
     if (!playerSelect) return;
 
-    // Extract player info from product names
-    // Product names from Square look like "2026-27 オーセンティックユニフォーム HOME #2 中道優斗"
-    // or "#1 WOLVES（サポーターナンバー）"
-    const players = [];
-    const playerMap = new Map(); // dedup by player identifier
+    // Extract player info from VARIATION names (format: "SIZE, PLAYERNAME/#NUM")
+    // Variations come from allSquareVariations which is set in applySquareProduct
+    const playerMap = new Map(); // dedup by player number
 
-    products.forEach(p => {
-      const name = p.name || '';
-      // Try to extract player number and name from the product name
-      // Patterns: "#数字 名前" or "数字 名前"
-      const match = name.match(/#?(\d+)\s+(.+)$/);
-      if (match) {
-        const num = match[1];
-        const playerName = match[2].trim();
-        const key = `#${num}`;
+    allSquareVariations.forEach(v => {
+      const parsed = parseVariationName(v.name);
+      if (parsed.playerName && parsed.playerNum) {
+        const key = `#${parsed.playerNum}`;
         if (!playerMap.has(key)) {
-          playerMap.set(key, {num, name: playerName, id: p.id});
+          playerMap.set(key, {num: parsed.playerNum, name: parsed.playerName, id: v.id});
         }
       }
     });
 
     // Sort by number
     const sortedPlayers = Array.from(playerMap.values()).sort((a, b) => parseInt(a.num) - parseInt(b.num));
+
+    if (sortedPlayers.length === 0) return; // keep HTML defaults if no players found
 
     // Build options
     playerSelect.innerHTML = '<option value="">選手を選択してください</option>';
@@ -309,13 +315,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const playerSelect = document.getElementById('playerSelect');
     const selectedOption = playerSelect ? playerSelect.selectedOptions[0] : null;
     const playerNum = selectedOption ? selectedOption.dataset.playerNum : null;
+    const playerName = selectedOption ? selectedOption.dataset.playerName : null;
 
     // Find variation matching both size and player
+    // Variation names: "SIZE, PLAYERNAME/#NUM"
     const match = variations.find(v => {
-      const vSize = v.name.trim();
-      const vSizeMatch = vSize === selectedSize;
-      // Check if this variation belongs to the selected player's product
-      const vPlayerMatch = playerNum ? (v.productName && v.productName.includes(`#${playerNum}`)) : true;
+      const parsed = parseVariationName(v.name);
+      const vSizeMatch = parsed.size.toUpperCase() === selectedSize.toUpperCase();
+      const vPlayerMatch = playerNum
+        ? (parsed.playerNum === playerNum && parsed.playerName && playerName &&
+           parsed.playerName.toUpperCase() === playerName.toUpperCase())
+        : true;
       return vSizeMatch && vPlayerMatch;
     });
 
@@ -340,23 +350,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     quantity = val;
     updateTotal();
   };
-
-  const qtyInput = document.getElementById('qtyInput');
-  if (qtyInput) {
-    qtyInput.addEventListener('change', () => {
-      quantity = parseInt(qtyInput.value) || 1;
-      updateTotal();
-    });
-  }
-
-  // Player selector
-  const playerSelect = document.getElementById('playerSelect');
-  if (playerSelect) {
-    playerSelect.addEventListener('change', () => {
-      selectedPlayer = playerSelect.value;
-    });
-  }
-
   // Size button selection (for non-Square mode) — moved to top, before async fetch
   // (see section 0 above)
 
