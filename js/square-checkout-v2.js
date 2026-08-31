@@ -183,7 +183,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (product.description) {
       const descEl = document.querySelector('.product-description__concept p');
-      if (descEl) descEl.textContent = product.description;
+      if (descEl) {
+        // Render description with line breaks
+        descEl.innerHTML = product.description.split('\n').map(line => {
+          const div = document.createElement('div');
+          div.textContent = line;
+          return div.outerHTML;
+        }).join('');
+      }
     }
     updateTotal();
   }
