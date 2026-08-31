@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/product.css?v=20260901c">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="images/logo.png" type="image/png">
+  <link rel="icon" href="images/voreas-favicon.png" type="image/png">
   <style>
     .manage-login {
       max-width: 400px;
@@ -21,7 +21,7 @@
     }
     .manage-login h1 { font-size: 20px; margin-bottom: 24px; text-align: center; }
     .manage-login input { width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
-    .manage-login button { width: 100%; padding: 14px; background: #000; color: #fff; border: none; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .manage-login button { width: 100%; padding: 14px; background: var(--voreas-black, #000); color: #fff; border: none; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; }
     .manage-login button:hover { background: #333; }
     .manage-login .error { color: #c60025; font-size: 14px; margin-bottom: 16px; text-align: center; }
     
@@ -36,13 +36,13 @@
     .chat-message--user { text-align: right; }
     .chat-message__bubble { display: inline-block; padding: 12px 16px; border-radius: 12px; max-width: 80%; font-size: 15px; line-height: 1.6; }
     .chat-message--bot .chat-message__bubble { background: #fff; border: 1px solid #ddd; }
-    .chat-message--user .chat-message__bubble { background: #000; color: #fff; }
+    .chat-message--user .chat-message__bubble { background: var(--voreas-black, #000); color: #fff; }
     .chat-message__image { max-width: 200px; border-radius: 8px; margin-top: 8px; }
     
     .chat-input-area { display: flex; gap: 12px; align-items: flex-end; }
     .chat-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; resize: vertical; min-height: 44px; }
-    .chat-send { padding: 12px 24px; background: #000; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-    .chat-send:hover { background: #333; }
+    .chat-send { padding: 12px 24px; background: var(--voreas-black, #000); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .chat-send:hover { background: var(--voreas-dark, #32373c); }
     .chat-send:disabled { background: #999; cursor: not-allowed; }
     
     .chat-upload { padding: 10px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 14px; }
@@ -54,8 +54,8 @@
     .product-preview__row span:first-child { color: #888; }
     .product-preview__row span:last-child { font-weight: 600; }
     .product-preview__image { max-width: 200px; border-radius: 8px; margin: 12px 0; }
-    .product-preview__register { width: 100%; padding: 16px; background: #c60025; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px; }
-    .product-preview__register:hover { background: #a0001e; }
+    .product-preview__register { width: 100%; padding: 16px; background: var(--voreas-red, #c60025); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+    .product-preview__register:hover { background: var(--voreas-dark-red, #8f0010); }
     .product-preview__register:disabled { background: #999; cursor: not-allowed; }
     
     .size-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
@@ -99,6 +99,17 @@
   </div>
 
   <script>
+    // --- XSS prevention: escape all user input before DOM insertion ---
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // --- Auth ---
     const AUTH_KEY = 'manage_auth';
     const LOGIN_ID = 'voreas';
@@ -154,7 +165,7 @@
       const container = document.getElementById('chatContainer');
       const msg = document.createElement('div');
       msg.className = 'chat-message chat-message--bot';
-      msg.innerHTML = `<div class="chat-message__bubble">${text.replace(/\n/g, '<br>')}</div>`;
+      msg.innerHTML = `<div class="chat-message__bubble">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
       container.appendChild(msg);
       container.scrollTop = container.scrollHeight;
     }
@@ -163,9 +174,9 @@
       const container = document.getElementById('chatContainer');
       const msg = document.createElement('div');
       msg.className = 'chat-message chat-message--user';
-      let html = `<div class="chat-message__bubble">${text.replace(/\n/g, '<br>')}`;
+      let html = `<div class="chat-message__bubble">${escapeHtml(text).replace(/\n/g, '<br>')}`;
       if (imageUrl) {
-        html += `<br><img src="${imageUrl}" class="chat-message__image">`;
+        html += `<br><img src="${escapeHtml(imageUrl)}" class="chat-message__image">`;
       }
       html += '</div>';
       msg.innerHTML = html;
@@ -315,17 +326,17 @@
       let html = '<div class="product-preview"><h3>登録内容確認</h3>';
       
       if (productData.imageUrl) {
-        html += `<img src="${productData.imageUrl}" class="product-preview__image">`;
+        html += `<img src="${escapeHtml(productData.imageUrl)}" class="product-preview__image">`;
       }
       
       html += `
-        <div class="product-preview__row"><span>商品タイプ</span><span>${productData.type}</span></div>
-        <div class="product-preview__row"><span>カラー</span><span>${productData.colors.join(', ')}</span></div>
-        <div class="product-preview__row"><span>サイズ</span><span>${productData.sizes.join(', ')}</span></div>
+        <div class="product-preview__row"><span>商品タイプ</span><span>${escapeHtml(productData.type)}</span></div>
+        <div class="product-preview__row"><span>カラー</span><span>${escapeHtml(productData.colors.join(', '))}</span></div>
+        <div class="product-preview__row"><span>サイズ</span><span>${escapeHtml(productData.sizes.join(', '))}</span></div>
         <div class="product-preview__row"><span>#1 WOLVES価格</span><span>¥${productData.priceWolves.toLocaleString()}</span></div>
         <div class="product-preview__row"><span>選手背番号あり価格</span><span>¥${productData.pricePlayer.toLocaleString()}</span></div>
         <div class="product-preview__row"><span>選手数</span><span>${productData.players.length}名</span></div>
-        <div class="product-preview__row"><span>カテゴリ</span><span>${productData.category}</span></div>
+        <div class="product-preview__row"><span>カテゴリ</span><span>${escapeHtml(productData.category)}</span></div>
         <div class="product-preview__row"><span>登録アイテム数</span><span>${totalItems}アイテム</span></div>
         <div class="product-preview__row"><span>バリエーション数</span><span>${totalVariations}個</span></div>
         <button class="product-preview__register" id="registerBtn" onclick="registerProducts()">この商品を登録してください</button>
