@@ -87,8 +87,31 @@ a {
   align-items: center;
 }
 
+.site-header__icon {
+  position: relative;
+}
+
 .site-header__icons svg {
   fill: var(--color-text-light);
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--voreas-red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
+  font-family: var(--font-en, 'Oswald', sans-serif);
 }
 
 /* Mobile header */
