@@ -186,6 +186,13 @@ async function handlePayment(request, env) {
         note: item.player ? `選手: ${item.player}, サイズ: ${item.size}` : undefined,
       })).filter(li => li.catalog_object_id || li.name);
 
+      // Add shipping as a line item so order total matches payment amount
+      lineItems.push({
+        name: '配送料',
+        quantity: '1',
+        base_price_money: { amount: 770, currency: currency || 'JPY' },
+      });
+
       if (lineItems.length > 0) {
         const orderBody = {
           idempotency_key: crypto.randomUUID(),
