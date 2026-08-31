@@ -719,6 +719,18 @@
   width: fit-content;
 }
 
+.cart-item__badge:empty {
+  display: none;
+}
+
+.cart-item__badge--away {
+  background: var(--voreas-black);
+}
+
+.cart-item__badge--libero {
+  background: #888;
+}
+
 .cart-item__name {
   font-size: 15px;
   font-weight: 700;
