@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VOREAS MEGA STORE</title>
+  <meta name="description" content="VOREAS MEGA STORE — ヴォレアス北海道公式オンラインストア">
+  <link rel="stylesheet" href="css/style.css?v=20260831f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.png" type="image/png">
+</head>
+<body>
+
+  <!-- ========== Header ========== -->
+  <header class="site-header">
+    <div class="site-header__logo">
+      <a href="/"><img src="images/logo.png" alt="VOREAS MEGA STORE"></a>
+    </div>
+
+    <nav>
+      <ul class="site-nav" id="siteNav">
+        <!-- Shopifyストアのリンク（後で自社ストアURLに変更） -->
+        <li><a href="#" class="site-nav__link">FOOD</a></li>
+        <li><a href="#" class="site-nav__link">WOLVES</a></li>
+        <li><a href="#" class="site-nav__link">GOODS</a></li>
+        <li><a href="#" class="site-nav__link">RAWLAW</a></li>
+        <li><a href="https://ticket-v.jp/teams/?id=479" class="site-nav__link" target="_blank" rel="noopener">TICKET</a></li>
+        <li><a href="https://voreas.co.jp/" class="site-nav__link" target="_blank" rel="noopener">INFO</a></li>
+      </ul>
+    </nav>
+
+    <div class="site-header__icons">
+      <!-- カート -->
+      <a href="/cart.html" class="site-header__icon" aria-label="カート">
+        <svg width="22px" height="23px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+      </a>
+    </div>
+
+    <button class="mobile-nav-toggle" onclick="document.getElementById('siteNav').classList.toggle('open')" aria-label="メニュー">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- ========== Main Content ========== -->
+  <main>
+
+    <!-- Section 0: First View Hero — 2026-27 Season (Send LP structure, VOREAS branding) -->
+    <section class="lp-hero">
+      <div class="lp-hero__bg"></div>
+      <div class="lp-hero__content">
+        <div class="lp-hero__anniversary">10TH ANNIVERSARY</div>
+        <h1 class="lp-hero__title">VOREAS HOKKAIDO</h1>
+        <p class="lp-hero__season">2026-27シーズンユニフォーム</p>
+        <p class="lp-hero__gold">10周年始動。</p>
+        <a href="/#ec-section" class="lp-hero__btn">商品を見る</a>
+        <p class="lp-hero__note">受注販売期間：2026年9月1日（火）〜2027年4月30日（金）</p>
+      </div>
+      <div class="lp-hero__band">
+        今シーズンから、待望のKIDSサイズが新登場！家族みんなでVOREASを着よう。
+      </div>
+    </section>
+
+    <!-- Section 0.5: EC — LINEUP (Send LP structure recreated) -->
+    <section class="ec-section" id="ec-section">
+      <div class="page-width">
+        <!-- Authentic Uniforms -->
+        <div class="ec-block">
+          <div class="ec-block__label">LINEUP</div>
+          <h2 class="ec-block__title">オーセンティックユニフォーム（トップスのみ）</h2>
+          <div class="ec-grid">
+            <div class="ec-card">
+              <div class="ec-card__badge">1st / RED</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-red.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">オーセンティックユニフォーム 1st/RED</h3>
+                <p class="ec-card__accent">選手がホームゲームで着用するカラーです。</p>
+                <p class="ec-card__desc">プロ仕様のフィット感と機能性。10周年記念仕様。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">27,500円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">22,000円</span></div>
+                </div>
+                <a href="product-authentic-home.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+            <div class="ec-card">
+              <div class="ec-card__badge">2nd / BLACK</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-black.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">オーセンティックユニフォーム 2nd/BLACK</h3>
+                <p class="ec-card__accent">選手がアウェイゲームで着用するカラーです。</p>
+                <p class="ec-card__desc">プロ仕様のフィット感と機能性。10周年記念仕様。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">27,500円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">22,000円</span></div>
+                </div>
+                <a href="product-authentic-home.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+            <div class="ec-card">
+              <div class="ec-card__badge">3rd / GRAY(LIBERO)</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-gray.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">オーセンティックユニフォーム 3rd/GRAY(LIBERO)</h3>
+                <p class="ec-card__accent">リベロメンバーが着用するカラーです。</p>
+                <p class="ec-card__desc">プロ仕様のフィット感と機能性。10周年記念仕様。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">27,500円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">22,000円</span></div>
+                </div>
+                <a href="product-authentic-away.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Replica Uniforms -->
+        <div class="ec-block">
+          <div class="ec-block__label">LINEUP</div>
+          <h2 class="ec-block__title">レプリカユニフォーム（トップス）</h2>
+          <div class="ec-grid">
+            <div class="ec-card">
+              <div class="ec-card__badge">1st / RED</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-red.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">レプリカユニフォーム 1st/RED</h3>
+                <p class="ec-card__accent">選手がホームゲームで着用するカラーです。</p>
+                <p class="ec-card__desc">ゆとりのあるフィット感で日常使いにも最適。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">9,900円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">8,800円</span></div>
+                </div>
+                <a href="product-replica-home.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+            <div class="ec-card">
+              <div class="ec-card__badge">2nd / BLACK</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-black.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">レプリカユニフォーム 2nd/BLACK</h3>
+                <p class="ec-card__accent">選手がアウェイゲームで着用するカラーです。</p>
+                <p class="ec-card__desc">ゆとりのあるフィット感で日常使いにも最適。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">9,900円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">8,800円</span></div>
+                </div>
+                <a href="product-replica-away.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+            <div class="ec-card">
+              <div class="ec-card__badge">3rd / GRAY(LIBERO)</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-gray.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">レプリカユニフォーム 3rd/GRAY(LIBERO)</h3>
+                <p class="ec-card__accent">リベロメンバーが着用するカラーです。</p>
+                <p class="ec-card__desc">ゆとりのあるフィット感で日常使いにも最適。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">9,900円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">8,800円</span></div>
+                </div>
+                <a href="product-replica-libero.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kids Replica Uniforms -->
+        <div class="ec-block">
+          <div class="ec-block__label">LINEUP</div>
+          <h2 class="ec-block__title">レプリカユニフォームKIDS（トップス）</h2>
+          <p class="ec-block__sub">今シーズン新登場</p>
+          <div class="ec-grid">
+            <div class="ec-card">
+              <div class="ec-card__badge">1st / RED</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-red.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">レプリカユニフォームKIDS 1st/RED</h3>
+                <p class="ec-card__accent">選手がホームゲームで着用するカラーです。</p>
+                <p class="ec-card__desc">お子様向けのフィット感。10周年記念。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">6,600円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">5,500円</span></div>
+                </div>
+                <a href="product-kids-home.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+            <div class="ec-card">
+              <div class="ec-card__badge">2nd / BLACK</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-black.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">レプリカユニフォームKIDS 2nd/BLACK</h3>
+                <p class="ec-card__accent">選手がアウェイゲームで着用するカラーです。</p>
+                <p class="ec-card__desc">お子様向けのフィット感。10周年記念。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">6,600円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">5,500円</span></div>
+                </div>
+                <a href="product-kids-away.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+            <div class="ec-card">
+              <div class="ec-card__badge">3rd / GRAY(LIBERO)</div>
+              <div class="ec-card__image" style="background-image: url('images/products/uniform-2026-27-gray.jpg'); background-size: cover; background-position: center;"></div>
+              <div class="ec-card__body">
+                <h3 class="ec-card__name">レプリカユニフォームKIDS 3rd/GRAY(LIBERO)</h3>
+                <p class="ec-card__accent">リベロメンバーが着用するカラーです。</p>
+                <p class="ec-card__desc">お子様向けのフィット感。10周年記念。トップスのみ販売。</p>
+                <div class="ec-card__prices">
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">選手ネーム/ナンバー加工</span><span class="ec-card__price-value">6,600円</span></div>
+                  <div class="ec-card__price-row"><span class="ec-card__price-label">#1 WOLVES（サポーターナンバー）</span><span class="ec-card__price-value">5,500円</span></div>
+                </div>
+                <a href="product-kids-libero.html" class="ec-card__btn">詳しく見る</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule Section -->
+        <div class="ec-block">
+          <div class="ec-block__label">SCHEDULE</div>
+          <h2 class="ec-block__title">先行受付とデザイン初公開</h2>
+          <div class="ec-schedule">
+            <div class="ec-schedule__col">
+              <h3 class="ec-schedule__heading">先行受付期間(9/1〜9/19)</h3>
+              <p>2026年9月1日（火）10:00より先行受付を開始。<br>9月19日（金）までのご予約で、10月下旬のお届け予定です。</p>
+            </div>
+            <div class="ec-schedule__col">
+              <h3 class="ec-schedule__heading">ホーム開幕(10/31・11/1)に間に合わせたい方へ</h3>
+              <p>9/20以降のご注文は、翌月集計・翌々月お届けとなります。<br>開幕戦に間に合わせるには9/19までのご予約が目安です。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Schedule -->
+        <div class="ec-block">
+          <div class="ec-block__label">DELIVERY</div>
+          <h2 class="ec-block__title">お届け予定スケジュール</h2>
+          <table class="ec-table">
+            <thead>
+              <tr><th>ご注文月</th><th>お届け予定</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2026年9月（9/1〜9/20）</td><td>2026年10月下旬</td></tr>
+              <tr><td>2026年9月（9/21〜9/30）</td><td>2026年11月下旬</td></tr>
+              <tr><td>2026年10月</td><td>2026年12月下旬</td></tr>
+              <tr><td>2026年11月</td><td>2027年1月下旬</td></tr>
+              <tr><td>2026年12月</td><td>2027年2月下旬</td></tr>
+              <tr><td>2027年1月</td><td>2027年3月下旬</td></tr>
+              <tr><td>2027年2月</td><td>2027年4月下旬</td></tr>
+              <tr><td>2027年3月</td><td>2027年5月下旬</td></tr>
+            </tbody>
+          </table>
+          <div class="ec-table__notes">
+            <p>※毎月20日までのご注分を集計し、約2ヶ月後のお届けとなります。</p>
+            <p>※シーズンオフ期間中（4月以降）のお届けも可能です。</p>
+            <p>※オーセンティック/レプリカ/KIDS共通の受注販売スケジュールです。</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section 0.6: Final CTA -->
+    <section class="lp-cta">
+      <div class="lp-cta__content">
+        <h2 class="lp-cta__title">10年目のVOREASと、ユニフォームを纏って共に戦いましょう！</h2>
+        <p class="lp-cta__subtitle">サポーターとしてクラブの次の10年をともに歩む一着を、今のうちに予約しよう。</p>
+        <a href="/#ec-section" class="lp-cta__btn">商品を見る</a>
+      </div>
+    </section>
+
+    <!-- Section 1: Feature Columns (観戦ガイド + HELP CENTER) -->
+    <section class="feature-columns">
+      <div class="page-width">
+        <div class="grid">
+
+          <!-- 観戦ガイド -->
+          <div class="feature-column">
+            <div class="feature-column__image">
+              <img src="images/guide.png" alt="ヴォレアス北海道観戦ガイド">
+            </div>
+            <h3>【初めての方】ヴォレアス北海道観戦ガイド！</h3>
+            <p>ヴォレアス北海道の試合に興味を持っていただき、ありがとうございます！道北最大級のエンターテイメントをぜひ会場で体感してください！</p>
+            <a href="https://voreashelp.zendesk.com/hc/ja/articles/4406933226777--%E5%88%9D%E3%82%81%E3%81%A6%E3%81%AE%E6%96%B9-%E3%83%B4%E3%82%A9%E3%83%AC%E3%82%A2%E3%82%B9%E5%8C%97%E6%B5%B7%E9%81%93%E8%A6%B3%E6%88%A6%E3%82%AC%E3%82%A4%E3%83%89-"
+               class="btn btn--secondary" target="_blank" rel="noopener">ヴォレアス北海道観戦ガイドページ</a>
+          </div>
+
+          <!-- HELP CENTER -->
+          <div class="feature-column">
+            <div class="feature-column__image">
+              <img src="images/help-center.jpg" alt="VOREAS HELP CENTER">
+            </div>
+            <h3>【VOREAS HELP CENTER】お問い合わせ先</h3>
+            <p>お問い合わせは【VOREAS HELP CENTER】から受け付けております。よくあるご質問についてもお答えしておりますのでお気軽にアクセスください！</p>
+            <a href="https://voreas-contact.pages.dev/contact"
+               class="btn btn--secondary" target="_blank" rel="noopener">VOREAS HELP CENTERページ</a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: RAWLAW Hero -->
+    <section class="hero-section">
+      <div class="hero-section__bg" style="background-image: url('images/rawlaw-bg.png');"></div>
+      <div class="hero-section__overlay"></div>
+      <div class="hero-section__content">
+        <h2 class="hero-section__title">シテンを変える、シゼンが変わる</h2>
+        <p class="hero-section__subtitle">
+          単に健康効果の高い食事を摂取することや、環境負荷の低いプロダクトを選ぶことでは、根本的な問題は解決しません。健康や環境問題への知識を共有し、意識の向上を促し、その知識と意識を次世代へと繋いでいくことが私たちRAWLAWのミッションです。
+        </p>
+        <a href="https://voreas.co.jp/rawlaw" class="btn hero-section__btn" target="_blank" rel="noopener">RAWLAW by VOREAS OFFICIAL WEBSITE</a>
+      </div>
+    </section>
+
+    <!-- Section 3: VOREAS ACADEMY Hero -->
+    <section class="hero-section">
+      <div class="hero-section__bg" style="background-image: url('images/academy-bg.jpg');"></div>
+      <div class="hero-section__overlay"></div>
+      <div class="hero-section__content">
+        <h2 class="hero-section__title">VOREAS ACADEMY / ヴォレアス  アカデミー</h2>
+        <p class="hero-section__subtitle">
+          家でも学校でも学べない体験がここにある。無料体験受付中！<br>
+          little：火 16:30-17:15<br>
+          U-12：月 19:00-20:30<br>
+          U-15：火 19:00-21:00<br>
+          U-12advance：水 19:00-20:30
+        </p>
+        <a href="https://lin.ee/oqxIrgb" class="btn hero-section__btn" target="_blank" rel="noopener">VOREAS ACADEMY 無料体験はこちら</a>
+      </div>
+    </section>
+
+    <!-- Section 4: 公式HP Hero -->
+    <section class="hero-section">
+      <div class="hero-section__bg" style="background-image: url('images/official-bg.jpg');"></div>
+      <div class="hero-section__overlay"></div>
+      <div class="hero-section__content">
+        <h2 class="hero-section__title">ヴォレアス北海道公式HP</h2>
+        <a href="https://voreas.co.jp/" class="btn hero-section__btn" target="_blank" rel="noopener">VOREAS HOKKAIDO OFFICIAL WEBSITE</a>
+      </div>
+    </section>
+
+    <!-- Section 5: お知らせ -->
+    <section class="news-section">
+      <div class="page-width">
+        <h2>お知らせ</h2>
+        <ul class="news-list">
+          <li class="news-item">
+            <span class="news-item__date">2026/02/17</span>
+            <a href="#" class="news-item__link">利用規約一部変更のお知らせ</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== Footer ========== -->
+  <footer class="site-footer">
+
+    <!-- SNS -->
+    <div class="site-footer__sns">
+      <div class="site-footer__sns-title">SNS</div>
+      <ul class="site-footer__sns-icons">
+        <li><a href="https://www.facebook.com/voreas.hokkaido/" target="_blank" rel="noopener"><img src="images/icon-fb.png" alt="Facebook"></a></li>
+        <li><a href="https://twitter.com/voreas_official" target="_blank" rel="noopener"><img src="images/icon-twitter.png" alt="Twitter"></a></li>
+        <li><a href="https://www.instagram.com/voreas_official/" target="_blank" rel="noopener"><img src="images/icon-instagram.png" alt="Instagram"></a></li>
+        <li><a href="https://www.youtube.com/channel/UCXegE460iKkJ6v40Y41inRA" target="_blank" rel="noopener"><img src="images/icon-youtube.png" alt="YouTube"></a></li>
+      </ul>
+    </div>
+
+    <!-- Links + Copyright -->
+    <div class="site-footer__main">
+      <ul class="site-footer__links">
+        <li><a href="#">ご利用ガイド</a></li>
+        <li><a href="#">よくあるご質問</a></li>
+        <li><a href="#">お問い合わせフォーム</a></li>
+        <li><a href="#">利用規約</a></li>
+        <li><a href="#">プライバシーポリシー</a></li>
+        <li><a href="#">配送ポリシー</a></li>
+        <li><a href="#">返金ポリシー</a></li>
+        <li><a href="#">特定商取引法に基づく表記</a></li>
+      </ul>
+      <div class="site-footer__copyright">
+        Copyright (C) 2026 VOREAS,INC. All Rights Reserved.
+      </div>
+    </div>
+
+  </footer>
+
+</body>
+</html>
