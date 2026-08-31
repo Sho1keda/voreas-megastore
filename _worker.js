@@ -322,6 +322,96 @@ async function handleRegister(request, env) {
   });
 }
 
+// ── API: POST /api/manage/fix-kids-sizes — Fix KIDS variation names in Square ──
+
+async function handleFixKidsSizes(request, env) {
+  const token = env.SQUARE_ACCESS_TOKEN;
+  if (!token) return json({ error: 'Square API not configured' }, 503);
+
+  // 1. Fetch all catalog items
+  const allItems = await fetchAllCatalogItems(token);
+  
+  // Kids products match pattern
+  const kidsPattern = /2026-27.*レプリカユニフォームKIDS/i;
+  const kidsItems = allItems.filter(obj => 
+    obj.type === 'ITEM' && !obj.is_deleted && kidsPattern.test(obj.item_data.name || '')
+  );
+
+  const results = [];
+  const sizeMap = { '2S': 'K.2S', 'S': 'K.S', 'M': 'K.M', 'L': 'K.L', 'XL': 'K.XL' };
+  const sizesToDelete = ['2XL', '3XL'];
+
+  for (const item of kidsItems) {
+    const variations = item.item_data.variations || [];
+    
+    for (const v of variations) {
+      if (v.is_deleted) continue;
+      const varName = v.item_variation_data?.name || '';
+      // Parse "SIZE, PLAYER/#NUM"
+      const sizePart = varName.split(',')[0].trim();
+      
+      if (sizesToDelete.includes(sizePart)) {
+        // Delete this variation
+        try {
+          const res = await fetch(`${SQUARE_API}/catalog/object/${v.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Square-Version': SQUARE_VERSION,
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          const data = await res.json();
+          results.push({ action: 'delete', id: v.id, oldName: varName, success: !data.errors });
+          if (data.errors) results[results.length-1].errors = data.errors;
+        } catch (e) {
+          results.push({ action: 'delete', id: v.id, oldName: varName, success: false, error: e.message });
+        }
+      } else if (sizeMap[sizePart]) {
+        // Rename: "2S, PLAYER/#NUM" → "K.2S, PLAYER/#NUM"
+        const newName = varName.replace(sizePart, sizeMap[sizePart]);
+        try {
+          const res = await fetch(`${SQUARE_API}/catalog/object`, {
+            method: 'POST',
+            headers: {
+              'Square-Version': SQUARE_VERSION,
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              idempotency_key: crypto.randomUUID(),
+              object: {
+                type: 'ITEM_VARIATION',
+                id: v.id,
+                version: v.version,
+                item_variation_data: {
+                  ...v.item_variation_data,
+                  name: newName,
+                },
+              },
+            }),
+          });
+          const data = await res.json();
+          results.push({ action: 'rename', id: v.id, oldName: varName, newName, success: !data.errors });
+          if (data.errors) results[results.length-1].errors = data.errors;
+        } catch (e) {
+          results.push({ action: 'rename', id: v.id, oldName: varName, newName, success: false, error: e.message });
+        }
+      }
+    }
+  }
+
+  const successCount = results.filter(r => r.success).length;
+  const failCount = results.filter(r => !r.success).length;
+
+  return json({
+    success: failCount === 0,
+    totalOperations: results.length,
+    successCount,
+    failCount,
+    results: results.slice(0, 20), // first 20 for debugging
+  });
+}
+
 // ── Main entry ──
 // Only intercept /api/* routes. Everything else goes to static assets
 // WITHOUT modification (preserving correct Content-Type headers).
