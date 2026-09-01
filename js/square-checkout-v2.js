@@ -162,8 +162,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         mainImg.alt = product.name;
       }
     }
-    const titleEl = document.querySelector('.product-info__title');
-    if (titleEl && product.name) titleEl.textContent = product.name;
+    // Don't overwrite the HTML title with Square product name (which includes #1WOLVES)
+    // const titleEl = document.querySelector('.product-info__title');
+    // if (titleEl && product.name) titleEl.textContent = product.name;
 
 
     if (product.variations && product.variations.length > 0) {
@@ -246,12 +247,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
         this.classList.add('selected');
         selectedSize = sizeName;
+        // updateVariationForSelection sets basePrice from the matched variation
+        // (correct price for selected player). Don't override with size button's price.
         updateVariationForSelection(allSquareVariations);
-        const priceAttr = this.dataset.price;
-        if (priceAttr) {
-          basePrice = parseInt(priceAttr);
-          const priceEl = document.querySelector('.product-info__price-value');
-          if (priceEl) priceEl.textContent = formatPrice(basePrice);
+        // If no player selected, use the size button's price as default
+        if (!currentVariation) {
+          const priceAttr = this.dataset.price;
+          if (priceAttr) {
+            basePrice = parseInt(priceAttr);
+            const priceEl = document.querySelector('.product-info__price-value');
+            if (priceEl) priceEl.textContent = formatPrice(basePrice);
+          }
         }
         updateTotal();
       });
