@@ -267,25 +267,16 @@ async function handlePayment(request, env) {
       return json({ error: 'Payment failed', details: data.errors }, 400);
     }
 
-    // Step 3: Send receipt email via Square if we have the email
-    if (customerEmail && data.payment.id) {
-      try {
-        await fetch(`${SQUARE_API}/payments/${data.payment.id}/complete`, {
-          method: 'POST',
-          headers: {
-            'Square-Version': SQUARE_VERSION,
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      } catch { /* receipt send is best-effort */ }
-    }
+    // Step 3: Send receipt email — Square Payments API doesn't auto-send receipts,
+    // so we send via the Google Apps Script webhook (MailApp.sendEmail)
+    // This is handled in the sheet webhook call below by including sendEmail: true
 
     // Step 4: Write to Google Spreadsheet (best-effort)
     let sheetStatus = 'skipped';
     if (env.GOOGLE_SHEET_WEBHOOK_URL && items) {
       try {
         const sheetPayload = {
+          sendEmail: true,
           paymentId: data.payment.id,
           paymentMethod: paymentMethod || '',
           name: customerName || '',
