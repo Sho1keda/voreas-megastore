@@ -323,9 +323,40 @@ async function handlePayment(request, env) {
       return json({ error: 'Payment failed', details: data.errors }, 400);
     }
 
-    // Step 3: Send receipt email — Square Payments API doesn't auto-send receipts,
-    // so we send via the Google Apps Script webhook (MailApp.sendEmail)
-    // This is handled in the sheet webhook call below by including sendEmail: true
+    // Step 3: Send receipt email directly via Resend API (reliable, no Apps Script dependency)
+    let emailStatus = 'skipped';
+    if (customerEmail && env.RESEND_API_KEY) {
+      try {
+        const items2 = items || [];
+        let rows = '';
+        let itemTotal = 0;
+        for (const item of items2) {
+          const subtotal = (item.unitPrice || 0) * (item.quantity || 1);
+          itemTotal += subtotal;
+          rows += `<tr><td style="padding:8px;border-bottom:1px solid #eee;">${item.name || ''}</td><td style="padding:8px;border-bottom:1px solid #eee;">${item.size || ''}</td><td style="padding:8px;border-bottom:1px solid #eee;">${item.player || ''}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity || 1}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">¥${subtotal.toLocaleString()}</td></tr>`;
+        }
+        const shipping = 770;
+        const grandTotal = itemTotal + shipping;
+        const emailHtml = `<!DOCTYPE html><html><body><div style="max-width:600px;margin:0 auto;font-family:sans-serif;color:#333;"><h2 style="color:#9e2b25;">VOREAS MEGASTORE</h2><p>${customerName || ''} 様</p><p>ご注文ありがとうございます。以下の内容で注文を受け付けました。</p><table style="width:100%;border-collapse:collapse;margin:20px 0;"><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">商品名</th><th style="padding:8px;">サイズ</th><th style="padding:8px;">選手名</th><th style="padding:8px;">数量</th><th style="padding:8px;text-align:right;">小計</th></tr>${rows}<tr><td colspan="4" style="padding:8px;text-align:right;">配送料</td><td style="padding:8px;text-align:right;">¥770</td></tr><tr><td colspan="4" style="padding:12px;text-align:right;font-weight:bold;">合計</td><td style="padding:12px;text-align:right;font-weight:bold;font-size:18px;">¥${grandTotal.toLocaleString()}</td></tr></table><h3 style="margin-top:30px;">お届け先</h3><p>${customerName || ''}<br>${shippingAddress?.zip || ''} ${shippingAddress?.prefecture || ''}${shippingAddress?.address1 || ''} ${shippingAddress?.address2 || ''} ${shippingAddress?.address3 || ''}<br>TEL: ${shippingAddress?.phone || ''}</p>${data.payment.receipt_url ? `<p style="margin-top:20px;"><a href="${data.payment.receipt_url}" style="color:#9e2b25;">レシートを確認する</a></p>` : ''}<hr style="border:none;border-top:1px solid #eee;margin:30px 0;"><p style="font-size:12px;color:#999;">VOREAS MEGASTORE — 10TH ANNIVERSARY</p></div></body></html>`;
+
+        const emailRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'VOREAS MEGASTORE <noreply@voreas-megastore.pages.dev>',
+            to: customerEmail,
+            subject: '【VOREAS MEGASTORE】ご注文ありがとうございます',
+            html: emailHtml,
+          }),
+        });
+        emailStatus = emailRes.ok ? 'sent' : `error: ${emailRes.status}`;
+      } catch (e) {
+        emailStatus = `error: ${e.message}`;
+      }
+    }
 
     // Step 4: Write to Google Spreadsheet (best-effort)
     let sheetStatus = 'skipped';
@@ -372,6 +403,7 @@ async function handlePayment(request, env) {
       orderId: orderId,
       receiptUrl: data.payment.receipt_url || '',
       status: data.payment.status,
+      emailStatus: emailStatus,
       sheetStatus: sheetStatus,
     });
   } catch (err) {
