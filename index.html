@@ -319,6 +319,12 @@
       '.ec-card, .ec-block__label, .ec-block__title, .lp-cta__content, .feature-columns__col'
     );
 
+    // Fix: hero button gets is-visible after fade-in animation completes
+    var heroBtn = document.querySelector('.lp-hero__btn');
+    if (heroBtn) {
+      setTimeout(function() { heroBtn.classList.add('is-visible'); }, 600);
+    }
+
     if (!('IntersectionObserver' in window) || !targets.length) {
       targets.forEach(function(el) { el.style.opacity = '1'; });
       return;

@@ -1082,9 +1082,13 @@ a {
     transform: translateY(0);
   }
 
-  /* Hero button pulse */
+  /* Hero button pulse — only after fade-in completes, use transform not animation */
   .lp-hero__btn {
-    animation: btnPulse 2s ease-in-out 1.5s infinite;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .lp-hero__btn.is-visible {
+    animation: btnPulse 2s ease-in-out infinite;
   }
 }
 
