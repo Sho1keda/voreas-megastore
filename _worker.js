@@ -141,7 +141,7 @@ async function handlePayment(request, env) {
     return json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const { sourceId, amount, currency, note, turnstileToken, items, customerEmail, customerName, shippingAddress } = body;
+  const { sourceId, amount, currency, note, turnstileToken, items, customerEmail, customerName, shippingAddress, paymentMethod } = body;
 
   if (!sourceId || !amount) {
     return json({ error: 'Missing required fields: sourceId, amount' }, 400);
@@ -282,6 +282,7 @@ async function handlePayment(request, env) {
     }
 
     // Step 4: Write to Google Spreadsheet (best-effort)
+    let sheetStatus = 'skipped';
     if (env.GOOGLE_SHEET_WEBHOOK_URL && items) {
       try {
         const sheetPayload = {
@@ -306,12 +307,16 @@ async function handlePayment(request, env) {
           })),
         };
 
-        await fetch(env.GOOGLE_SHEET_WEBHOOK_URL, {
+        const sheetRes = await fetch(env.GOOGLE_SHEET_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(sheetPayload),
+          redirect: 'follow',
         });
-      } catch { /* sheet write is best-effort */ }
+        sheetStatus = `sent (${sheetRes.status})`;
+      } catch (e) {
+        sheetStatus = `error: ${e.message}`;
+      }
     }
 
     return json({
@@ -320,6 +325,7 @@ async function handlePayment(request, env) {
       orderId: orderId,
       receiptUrl: data.payment.receipt_url || '',
       status: data.payment.status,
+      sheetStatus: sheetStatus,
     });
   } catch (err) {
     return json({ error: err.message }, 500);
