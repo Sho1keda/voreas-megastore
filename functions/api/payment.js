@@ -168,6 +168,7 @@ export async function onRequestPost(context) {
       },
       location_id: locationId,
       note: note || `VOREAS MEGASTORE order - ${variationName || 'item'} x${quantity || 1}`,
+      ...(body.customerEmail ? { buyer_email_address: body.customerEmail } : {}),
     };
 
     const res = await fetch(`${SQUARE_API}/payments`, {
