@@ -162,8 +162,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         mainImg.alt = product.name;
       }
     }
-    const titleEl = document.querySelector('.product-info__title');
-    if (titleEl && product.name) titleEl.textContent = product.name;
+    // Do NOT overwrite the product title with Square's item name (which includes #1WOLVES etc.)
+    // Keep the clean HTML title as-is
 
 
     if (product.variations && product.variations.length > 0) {
@@ -374,9 +374,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Build cart item
+      // Build cart item — use the selected player's product info
       const productTitle = document.querySelector('.product-info__title')?.textContent || `${productType}-${productColor}`;
       const productBadge = document.querySelector('.product-info__badge')?.textContent || '';
+      
+      // Find the correct product for the selected player
+      const playerSelect = document.getElementById('playerSelect');
+      const selectedOption = playerSelect ? playerSelect.selectedOptions[0] : null;
+      const playerNum = selectedOption ? selectedOption.dataset.playerNum : null;
+      const playerName = selectedOption ? selectedOption.dataset.playerName : null;
+      
+      // Find the matching product from allSquareVariations
+      const matchingVariation = allSquareVariations.find(v => {
+        const vSize = v.name.trim();
+        const vSizeMatch = vSize === selectedSize;
+        const vPlayerMatch = playerNum ? (v.productName && v.productName.includes(`#${playerNum}`)) : true;
+        return vSizeMatch && vPlayerMatch;
+      });
+
+      const finalPrice = matchingVariation?.price || basePrice;
+      const finalVariationId = matchingVariation?.id || currentVariation?.id || '';
+      
       const cartItem = {
         productId: squareProduct?.id || `${productType}-${productColor}`,
         productType,
@@ -386,8 +404,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         size: selectedSize,
         player: selectedPlayer || '',
         quantity: quantity,
-        unitPrice: basePrice,
-        variationId: currentVariation?.id || '',
+        unitPrice: finalPrice,
+        variationId: finalVariationId,
         imageUrl: squareProduct?.imageUrl || '',
       };
 
