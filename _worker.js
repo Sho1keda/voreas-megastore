@@ -538,6 +538,76 @@ async function handleFixKidsSizes(request, env) {
   });
 }
 
+// ── API: POST /api/webhooks/square — Square webhook for refund/cancel events ──
+
+async function handleSquareWebhook(request, env) {
+  let body;
+  try {
+    body = await request.text();
+  } catch {
+    return json({ error: 'Invalid body' }, 400);
+  }
+
+  // Verify Square webhook signature (if signature key is set)
+  const signature = request.headers.get('x-square-hmacsha256-signature');
+  const webhookKey = env.SQUARE_WEBHOOK_SIGNATURE_KEY;
+  
+  if (webhookKey && signature) {
+    // Verify HMAC-SHA256 signature
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(webhookKey);
+    const bodyData = encoder.encode(body);
+    const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const expectedSig = await crypto.subtle.sign('HMAC', cryptoKey, bodyData);
+    const expectedHex = Array.from(new Uint8Array(expectedSig)).map(b => b.toString(16).padStart(2, '0')).join('');
+    if (signature !== expectedHex) {
+      return json({ error: 'Invalid signature' }, 403);
+    }
+  }
+
+  let event;
+  try {
+    event = JSON.parse(body);
+  } catch {
+    return json({ error: 'Invalid JSON' }, 400);
+  }
+
+  const eventType = event.type || '';
+  const payment = event.data?.object?.payment || {};
+
+  // Handle refund and cancel events
+  if (eventType === 'payment.refunded' || eventType === 'payment.updated') {
+    const paymentId = payment.id || '';
+    const status = payment.status || '';
+    
+    // Determine action
+    let action = '';
+    if (eventType === 'payment.refunded') {
+      action = 'refund';
+    } else if (status === 'CANCELED' || status === 'CANCELLED') {
+      action = 'cancel';
+    }
+
+    if (action && paymentId && env.GOOGLE_SHEET_WEBHOOK_URL) {
+      try {
+        await fetch(env.GOOGLE_SHEET_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: action,
+            paymentId: paymentId,
+            status: status,
+            refundedAmount: payment.refunded_money?.amount || 0,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch { /* best-effort */ }
+    }
+  }
+
+  return json({ received: true, type: eventType });
+}
+
 // ── Main entry ──
 // Only intercept /api/* routes. Everything else goes to static assets
 // WITHOUT modification (preserving correct Content-Type headers).
@@ -557,6 +627,9 @@ export default {
       }
       if (path === '/api/manage/register' && request.method === 'POST') {
         return handleRegister(request, env);
+      }
+      if (path === '/api/webhooks/square' && request.method === 'POST') {
+        return handleSquareWebhook(request, env);
       }
       return json({ error: 'Not found' }, 404);
     }
