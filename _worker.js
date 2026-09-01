@@ -346,7 +346,7 @@ async function handlePayment(request, env) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'VOREAS MEGASTORE <noreply@voreas-megastore.pages.dev>',
+            from: 'VOREAS MEGASTORE <noreply@voreas.app>',
             to: customerEmail,
             subject: '【VOREAS MEGASTORE】ご注文ありがとうございます',
             html: emailHtml,
@@ -723,6 +723,46 @@ export default {
       }
       if (path === '/api/webhooks/square' && request.method === 'POST') {
         return handleSquareWebhook(request, env);
+      }
+      if (path === '/api/test-email' && request.method === 'POST') {
+        // Debug endpoint: test if Apps Script webhook + email works
+        const webhookUrl = env.GOOGLE_SHEET_WEBHOOK_URL;
+        if (!webhookUrl) return json({ error: 'GOOGLE_SHEET_WEBHOOK_URL not set' }, 500);
+        
+        const testPayload = {
+          sendEmail: true,
+          paymentId: 'TEST-' + Date.now(),
+          paymentMethod: 'Card',
+          name: 'テスト 太郎',
+          email: 's-ikeda@remium.jp',
+          phone: '090-1234-5678',
+          zip: '070-0000',
+          prefecture: '北海道',
+          address1: '旭川市テスト1-2-3',
+          address2: 'テスト4-5-6',
+          address3: '',
+          total: 7370,
+          receiptUrl: 'https://squareup.com/receipt/test',
+          items: [{ name: 'テスト商品', size: 'M', player: '#2 テスト', quantity: 1, unitPrice: 6600 }],
+        };
+        
+        try {
+          const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(testPayload),
+            redirect: 'follow',
+          });
+          const resText = await res.text();
+          return json({ 
+            webhookStatus: res.status, 
+            webhookResponse: resText.substring(0, 500),
+            sentEmail: true,
+            emailTo: testPayload.email,
+          });
+        } catch (e) {
+          return json({ error: e.message, webhookUrl: webhookUrl.substring(0, 50) + '...' });
+        }
       }
       return json({ error: 'Not found' }, 404);
     }
