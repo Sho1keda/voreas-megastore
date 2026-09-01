@@ -131,6 +131,7 @@ export async function onRequestPost(context) {
     if (env.GOOGLE_SHEET_WEBHOOK_URL && body.items) {
       try {
         const sheetPayload = {
+          sendEmail: true,
           paymentId: data.payment.id,
           paymentMethod: body.paymentMethod || '',
           name: body.customerName || '',
