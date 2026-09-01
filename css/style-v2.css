@@ -946,3 +946,167 @@ a {
     gap: 16px;
   }
 }
+
+/* ========== SP-only line breaks (hidden on PC) ========== */
+.sp-only {
+  display: none;
+}
+
+/* ========== Mobile-only fixes & animations ========== */
+@media (max-width: 768px) {
+  /* Show SP-only <br> tags */
+  .sp-only {
+    display: inline;
+  }
+
+  /* 1. VOREAS HOKKAIDO image — enlarge from 38vw to 80vw */
+  .lp-hero__title img {
+    width: 80vw !important;
+    margin-bottom: -8vw !important;
+  }
+
+  /* 2. KIDS band — line break after 新登場！ + better spacing */
+  .lp-hero__band {
+    font-size: 13px;
+    padding: 14px 20px;
+    line-height: 1.8;
+    word-break: keep-all;
+  }
+
+  /* 3. EC block title — line break with smaller parenthetical */
+  .ec-block__title {
+    font-size: 20px;
+    line-height: 1.6;
+  }
+
+  /* 4. CTA title — line break + natural wrapping */
+  .lp-cta__title {
+    font-size: 22px;
+    line-height: 1.7;
+    word-break: keep-all;
+  }
+
+  .lp-cta__subtitle {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  /* 5. Scroll animations — fade-in-up for cards and sections */
+  .ec-card {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .ec-card.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .ec-block__label,
+  .ec-block__title {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  }
+
+  .ec-block__label.is-visible,
+  .ec-block__title.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .lp-hero__text-area > * {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: heroFadeIn 0.8s ease-out forwards;
+  }
+
+  .lp-hero__text-area > *:nth-child(1) { animation-delay: 0.2s; }
+  .lp-hero__text-area > *:nth-child(2) { animation-delay: 0.4s; }
+  .lp-hero__text-area > *:nth-child(3) { animation-delay: 0.6s; }
+  .lp-hero__text-area > *:nth-child(4) { animation-delay: 0.8s; }
+
+  .lp-hero__anniversary {
+    opacity: 0;
+    animation: heroFadeIn 0.8s ease-out 0.1s forwards;
+  }
+
+  .lp-cta__content > * {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .lp-cta__content.is-visible > *:nth-child(1) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.1s;
+  }
+
+  .lp-cta__content.is-visible > *:nth-child(2) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.3s;
+  }
+
+  .lp-cta__content.is-visible > *:nth-child(3) {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.5s;
+  }
+
+  /* Hero band slide-up animation */
+  .lp-hero__band {
+    opacity: 0;
+    transform: translateY(100%);
+    animation: bandSlideUp 0.8s ease-out 1s forwards;
+  }
+
+  /* Feature columns fade-in */
+  .feature-columns__col {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .feature-columns__col.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Hero button pulse */
+  .lp-hero__btn {
+    animation: btnPulse 2s ease-in-out 1.5s infinite;
+  }
+}
+
+/* ========== Keyframes (mobile animations) ========== */
+@keyframes heroFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bandSlideUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes btnPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+/* ========== IntersectionObserver scroll animation (mobile + PC) ========== */
+@media (max-width: 768px) {
+  .ec-card:nth-child(2).is-visible { transition-delay: 0.1s; }
+  .ec-card:nth-child(3).is-visible { transition-delay: 0.2s; }
+}

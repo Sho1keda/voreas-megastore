@@ -64,7 +64,7 @@
         <p class="lp-hero__note">受注販売期間：2026年9月1日（火）〜2027年4月30日（金）</p>
       </div>
       <div class="lp-hero__band">
-        今シーズンから、待望のKIDSサイズが新登場！家族みんなでVOREASを着よう。
+        今シーズンから、待望のKIDSサイズが新登場！<br class="sp-only">家族みんなでVOREASを着よう。
       </div>
     </section>
 
@@ -74,7 +74,7 @@
         <!-- Authentic Uniforms -->
         <div class="ec-block">
           <div class="ec-block__label">LINEUP</div>
-          <h2 class="ec-block__title">オーセンティックユニフォーム（トップスのみ）</h2>
+          <h2 class="ec-block__title">オーセンティックユニフォーム<br class="sp-only">（トップスのみ）</h2>
           <div class="ec-grid">
             <div class="ec-card">
               <div class="ec-card__badge">1st / RED</div>
@@ -270,7 +270,7 @@
     <!-- Section 0.6: Final CTA -->
     <section class="lp-cta">
       <div class="lp-cta__content">
-        <h2 class="lp-cta__title">10周年のVOREASと、ユニフォームを纏って共に戦いましょう！</h2>
+        <h2 class="lp-cta__title">10周年のVOREASと、ユニフォームを<br class="sp-only">纏って共に戦いましょう！</h2>
         <p class="lp-cta__subtitle">VOREASの次の10年をともに歩む一着を、今のうちに予約しよう。</p>
         <a href="/#ec-section" class="lp-cta__btn">商品を見る</a>
       </div>
@@ -310,5 +310,31 @@
   </footer>
 
   <script src="js/cart-badge.js"></script>
+  <script>
+  // Mobile-only scroll animations via IntersectionObserver
+  (function() {
+    if (window.matchMedia('(min-width: 769px)').matches) return;
+
+    var targets = document.querySelectorAll(
+      '.ec-card, .ec-block__label, .ec-block__title, .lp-cta__content, .feature-columns__col'
+    );
+
+    if (!('IntersectionObserver' in window) || !targets.length) {
+      targets.forEach(function(el) { el.style.opacity = '1'; });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+    targets.forEach(function(el) { observer.observe(el); });
+  })();
+  </script>
 </body>
 </html>
