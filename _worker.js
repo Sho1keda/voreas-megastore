@@ -240,7 +240,62 @@ async function handlePayment(request, env) {
       }
     }
 
-    // Step 2: Create payment, optionally linked to the order
+    // Step 1b: Create or find a Square Customer with the buyer's email
+    // This enables Square to send automatic receipt emails
+    let customerId = null;
+    if (customerEmail) {
+      try {
+        // Search for existing customer by email
+        const searchRes = await fetch(`${SQUARE_API}/customers/search`, {
+          method: 'POST',
+          headers: {
+            'Square-Version': SQUARE_VERSION,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: { filter: { email_address: { exact: customerEmail } } },
+          }),
+        });
+        const searchData = await searchRes.json();
+        if (searchData.customers && searchData.customers.length > 0) {
+          customerId = searchData.customers[0].id;
+        } else {
+          // Create new customer
+          const custRes = await fetch(`${SQUARE_API}/customers`, {
+            method: 'POST',
+            headers: {
+              'Square-Version': SQUARE_VERSION,
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              idempotency_key: crypto.randomUUID(),
+              given_name: customerName?.split(' ')[0] || '',
+              family_name: customerName?.split(' ').slice(1).join(' ') || '',
+              email_address: customerEmail,
+              phone_number: shippingAddress?.phone || '',
+              address: {
+                postal_code: shippingAddress?.zip || '',
+                administrative_district_level_1: shippingAddress?.prefecture || '',
+                locality: shippingAddress?.address1 || '',
+                address_line_1: shippingAddress?.address2 || '',
+                address_line_2: shippingAddress?.address3 || '',
+                country: 'JP',
+              },
+            }),
+          });
+          const custData = await custRes.json();
+          if (custData.customer) {
+            customerId = custData.customer.id;
+          }
+        }
+      } catch (e) {
+        console.log('Customer creation failed:', e.message);
+      }
+    }
+
+    // Step 2: Create payment, optionally linked to the order and customer
     const paymentBody = {
       source_id: sourceId,
       idempotency_key: idempotencyKey,
@@ -249,6 +304,7 @@ async function handlePayment(request, env) {
       note: note || `VOREAS MEGASTORE order`,
       ...(customerEmail ? { buyer_email_address: customerEmail } : {}),
       ...(orderId ? { order_id: orderId } : {}),
+      ...(customerId ? { customer_id: customerId } : {}),
     };
 
     const res = await fetch(`${SQUARE_API}/payments`, {
