@@ -971,6 +971,13 @@ a {
     height: 75vw !important;
   }
 
+  /* Wolf mark — enlarge to match logo scale on mobile */
+  .lp-hero__bg::before {
+    width: 80vw !important;
+    height: 80vw !important;
+    max-width: none !important;
+  }
+
   /* 2. KIDS band — line break after 新登場！ + better spacing */
   .lp-hero__band {
     font-size: 13px;
@@ -1033,11 +1040,6 @@ a {
   .lp-hero__text-area > *:nth-child(2) { animation-delay: 0.25s; }
   .lp-hero__text-area > *:nth-child(3) { animation-delay: 0.4s; }
   .lp-hero__text-area > *:nth-child(4) { animation-delay: 0.55s; }
-
-  .lp-hero__anniversary {
-    opacity: 0;
-    animation: heroFadeIn 0.8s ease-out 0.1s forwards;
-  }
 
   .lp-cta__content > * {
     opacity: 0;
