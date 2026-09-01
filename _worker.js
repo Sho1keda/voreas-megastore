@@ -363,7 +363,7 @@ async function handlePayment(request, env) {
     if (env.GOOGLE_SHEET_WEBHOOK_URL && items) {
       try {
         const sheetPayload = {
-          sendEmail: true,
+          sendEmail: false,
           paymentId: data.payment.id,
           paymentMethod: paymentMethod || '',
           name: customerName || '',
@@ -730,7 +730,7 @@ export default {
         if (!webhookUrl) return json({ error: 'GOOGLE_SHEET_WEBHOOK_URL not set' }, 500);
         
         const testPayload = {
-          sendEmail: true,
+          sendEmail: false,
           paymentId: 'TEST-' + Date.now(),
           paymentMethod: 'Card',
           name: 'テスト 太郎',
