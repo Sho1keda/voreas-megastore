@@ -345,7 +345,7 @@
         div.innerHTML = `
           <div class="checkout-item__image">${imageHtml}</div>
           <div class="checkout-item__info">
-            <p class="checkout-item__name">${item.name}</p>
+            <p class="checkout-item__name">${(item.name || '').replace(/#\d+WOLVES/g, '').replace(/\[.*?\]/g, '').trim()}</p>
             <p class="checkout-item__meta">${item.size}${playerText} ×${item.quantity}</p>
           </div>
           <div class="checkout-item__price">${formatPrice(item.unitPrice * item.quantity)}</div>

@@ -200,7 +200,7 @@
           <div class="cart-item__image">${imageHtml}</div>
           <div class="cart-item__info">
             <div class="cart-item__badge${badgeClass}">${item.badge || ''}</div>
-            <h3 class="cart-item__name">${item.name}</h3>
+            <h3 class="cart-item__name">${(item.name || '').replace(/#\d+WOLVES/g, '').replace(/\[.*?\]/g, '').trim()}</h3>
             <p class="cart-item__meta">サイズ: ${item.size}</p>
             ${playerText}
             <p class="cart-item__price">${formatPrice(item.unitPrice)}（税込）</p>
