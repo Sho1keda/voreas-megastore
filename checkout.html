@@ -573,7 +573,7 @@
             sessionStorage.setItem('last_order', JSON.stringify({
               paymentId: data.paymentId,
               receiptUrl: data.receiptUrl || '',
-              total: total,
+              total: total - (window._couponDiscount || 0),
               name: name,
               email: email,
               items: cart.map(i => ({
@@ -593,12 +593,12 @@
             }
             statusEl.innerHTML = `<p class="square-checkout__error">決済エラー: ${errMsg}</p>`;
             btn.disabled = false;
-            btn.textContent = `注文する ${formatPrice(total)}`;
+            btn.textContent = `注文する ${formatPrice(total - (window._couponDiscount || 0))}`;
           }
         } catch (e) {
           statusEl.innerHTML = `<p class="square-checkout__error">エラーが発生しました: ${e.message}</p>`;
           btn.disabled = false;
-          btn.textContent = `注文する ${formatPrice(total)}`;
+          btn.textContent = `注文する ${formatPrice(total - (window._couponDiscount || 0))}`;
         }
       }
 
@@ -641,7 +641,7 @@
             }
             statusEl.innerHTML = `<p class="square-checkout__error">${errorMsg}</p>`;
             btn.disabled = false;
-            btn.textContent = `注文する ${formatPrice(total)}`;
+            btn.textContent = `注文する ${formatPrice(total - (window._couponDiscount || 0))}`;
             return;
           }
 
@@ -650,7 +650,7 @@
         } catch (e) {
           statusEl.innerHTML = `<p class="square-checkout__error">エラーが発生しました: ${e.message}</p>`;
           btn.disabled = false;
-          btn.textContent = `注文する ${formatPrice(total)}`;
+          btn.textContent = `注文する ${formatPrice(total - (window._couponDiscount || 0))}`;
         }
       });
     })();

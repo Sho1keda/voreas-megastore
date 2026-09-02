@@ -391,10 +391,13 @@ async function handlePayment(request, env) {
           rows += `<tr><td style="padding:10px;border-bottom:1px solid #eee;">${item.name || ''}<br><span style="font-size:12px;color:#888;">サイズ: ${item.size || '-'} / 選手名: ${item.player || '-'}</span></td><td style="padding:10px;border-bottom:1px solid #eee;text-align:center;">${item.quantity || 1}</td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;">¥${subtotal.toLocaleString()}</td></tr>`;
         }
         const shipping = 770;
-        const grandTotal = itemTotal + shipping;
+        const grandTotal = itemTotal + shipping - discountAmount;
         const orderDate = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
         const paymentId = data.payment.id || '';
         const paymentMethodLabel = paymentMethod === 'Bank' ? '銀行振込' : (paymentMethod || 'クレジットカード');
+        const discountRow = discountAmount > 0
+          ? `<tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">割引</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;color:#9e2b25;">-¥${discountAmount.toLocaleString()}</td></tr>`
+          : '';
 
         const emailHtml = `<!DOCTYPE html><html><body>
 <div style="max-width:600px;margin:0 auto;font-family:'Hiragino Sans','Meiryo',sans-serif;color:#333;">
@@ -412,6 +415,7 @@ async function handlePayment(request, env) {
 ${rows}
 <tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">小計</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;">¥${itemTotal.toLocaleString()}</td></tr>
 <tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">配送料</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;">¥${shipping.toLocaleString()}</td></tr>
+${discountRow}
 <tr><td style="padding:14px;text-align:right;font-weight:bold;font-size:16px;">合計</td><td colspan="2" style="padding:14px;text-align:right;font-weight:bold;font-size:20px;color:#9e2b25;">¥${grandTotal.toLocaleString()}</td></tr>
 </table>
 
