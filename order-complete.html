@@ -120,6 +120,9 @@
   </footer>
 
   <script>
+    function formatPrice(amount) {
+      return '¥' + Math.round(amount).toLocaleString();
+    }
     (function() {
       function formatPrice(amount) {
         return '¥' + Math.round(amount).toLocaleString();
