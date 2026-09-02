@@ -121,6 +121,9 @@
 
   <script>
     (function() {
+      function formatPrice(amount) {
+        return '¥' + Math.round(amount).toLocaleString();
+      }
       const order = JSON.parse(sessionStorage.getItem('last_order') || 'null');
       if (!order) {
         window.location.href = '/';
