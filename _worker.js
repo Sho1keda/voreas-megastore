@@ -211,6 +211,7 @@ async function handlePayment(request, env) {
           if (catalogData.objects) {
             // Find discount by name (coupon code = discount name in Square Dashboard)
             const discount = catalogData.objects.find(obj => {
+              if (obj.is_deleted) return false;
               const name = obj.discount_data?.name || '';
               return name.toUpperCase() === couponCode.toUpperCase();
             });
@@ -861,13 +862,19 @@ async function handleCouponValidate(request, env) {
       return json({ valid: false, message: '無効なクーポンコードです' });
     }
 
+    // Filter out deleted discounts and find by name (case-insensitive)
     const discount = catalogData.objects.find(obj => {
+      if (obj.is_deleted) return false;
       const name = obj.discount_data?.name || '';
       return name.toUpperCase() === couponCode.toUpperCase();
     });
 
     if (!discount) {
-      return json({ valid: false, message: '無効なクーポンコードです' });
+      // Debug: list available discount names for troubleshooting
+      const available = catalogData.objects
+        .filter(obj => !obj.is_deleted && obj.discount_data?.name)
+        .map(obj => obj.discount_data.name);
+      return json({ valid: false, message: '無効なクーポンコードです', availableDiscounts: available });
     }
 
     const dd = discount.discount_data;
