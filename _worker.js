@@ -816,6 +816,9 @@ export default {
           return json({ error: e.message, webhookUrl: webhookUrl.substring(0, 50) + '...' });
         }
       }
+      if (path === '/api/coupon-validate' && request.method === 'POST') {
+        return handleCouponValidate(request, env);
+      }
       return json({ error: 'Not found' }, 404);
     }
 
@@ -823,3 +826,70 @@ export default {
     return env.ASSETS.fetch(request);
   },
 };
+
+// ── Handler: POST /api/coupon-validate ──
+
+async function handleCouponValidate(request, env) {
+  const token = env.SQUARE_ACCESS_TOKEN;
+  if (!token) {
+    return json({ valid: false, message: 'API not configured' }, 503);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ valid: false, message: 'Invalid request' }, 400);
+  }
+
+  const { couponCode, subtotal } = body;
+  if (!couponCode) {
+    return json({ valid: false, message: 'クーポンコードを入力してください' }, 400);
+  }
+
+  try {
+    const catalogRes = await fetch(`${SQUARE_API}/catalog/list?types=DISCOUNT`, {
+      method: 'GET',
+      headers: {
+        'Square-Version': SQUARE_VERSION,
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    const catalogData = await catalogRes.json();
+
+    if (!catalogData.objects || catalogData.objects.length === 0) {
+      return json({ valid: false, message: '無効なクーポンコードです' });
+    }
+
+    const discount = catalogData.objects.find(obj => {
+      const name = obj.discount_data?.name || '';
+      return name.toUpperCase() === couponCode.toUpperCase();
+    });
+
+    if (!discount) {
+      return json({ valid: false, message: '無効なクーポンコードです' });
+    }
+
+    const dd = discount.discount_data;
+    let discountAmount = 0;
+    let discountType = '';
+
+    if (dd.discount_type === 'FIXED_PERCENTAGE' || dd.discount_type === 'VARIABLE_PERCENTAGE') {
+      const pct = parseFloat(dd.percentage || '0');
+      discountAmount = Math.round((subtotal || 0) * pct / 100);
+      discountType = `${pct}%`;
+    } else if (dd.discount_type === 'FIXED_AMOUNT' || dd.discount_type === 'VARIABLE_AMOUNT') {
+      discountAmount = dd.amount_money?.amount || 0;
+      discountType = `¥${discountAmount}`;
+    }
+
+    return json({
+      valid: true,
+      discountAmount: discountAmount,
+      discountType: discountType,
+      couponName: dd.name || couponCode,
+    });
+  } catch (err) {
+    return json({ valid: false, message: err.message }, 500);
+  }
+}
