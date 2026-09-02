@@ -174,6 +174,8 @@ async function handlePayment(request, env) {
   try {
     // Step 1: Create a Square Order with line items tied to catalog variations
     let orderId = null;
+    let couponStatus = 'none';
+    let discountAmount = 0;
     
     if (items && items.length > 0) {
       const lineItems = items.map(item => ({
@@ -195,8 +197,6 @@ async function handlePayment(request, env) {
       });
 
       // Apply coupon discount if provided
-      let couponStatus = 'none';
-      let discountAmount = 0;
       if (couponCode) {
         try {
           // Search Square Catalog for a discount matching the coupon code
