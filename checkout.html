@@ -362,6 +362,13 @@
       document.getElementById('subtotal').textContent = formatPrice(subtotal);
       document.getElementById('shipping').textContent = formatPrice(SHIPPING);
       document.getElementById('tax').textContent = formatPrice(0);
+      window._subtotal = subtotal;
+      window._recalculateTotal = function(discountAmount) {
+        var newTotal = (window._subtotal || 0) + SHIPPING - discountAmount;
+        document.getElementById('total').textContent = formatPrice(newTotal);
+        document.getElementById('placeOrderBtn').textContent = '注文する ' + formatPrice(newTotal);
+        window._couponDiscount = discountAmount;
+      };
       document.getElementById('total').textContent = formatPrice(total);
       document.getElementById('orderCount').textContent = `ご注文内容（${cart.length}点）`;
       document.getElementById('placeOrderBtn').textContent = `注文する ${formatPrice(total)}`;
@@ -532,12 +539,13 @@
         }));
 
         try {
+          const finalTotal = total - (window._couponDiscount || 0);
           const res = await fetch('/api/payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               sourceId,
-              amount: total,
+              amount: finalTotal,
               currency: 'JPY',
               note,
               turnstileToken,
