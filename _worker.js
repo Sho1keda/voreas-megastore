@@ -388,11 +388,64 @@ async function handlePayment(request, env) {
         for (const item of items2) {
           const subtotal = (item.unitPrice || 0) * (item.quantity || 1);
           itemTotal += subtotal;
-          rows += `<tr><td style="padding:8px;border-bottom:1px solid #eee;">${item.name || ''}</td><td style="padding:8px;border-bottom:1px solid #eee;">${item.size || ''}</td><td style="padding:8px;border-bottom:1px solid #eee;">${item.player || ''}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity || 1}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">¥${subtotal.toLocaleString()}</td></tr>`;
+          rows += `<tr><td style="padding:10px;border-bottom:1px solid #eee;">${item.name || ''}<br><span style="font-size:12px;color:#888;">サイズ: ${item.size || '-'} / 選手名: ${item.player || '-'}</span></td><td style="padding:10px;border-bottom:1px solid #eee;text-align:center;">${item.quantity || 1}</td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;">¥${subtotal.toLocaleString()}</td></tr>`;
         }
         const shipping = 770;
         const grandTotal = itemTotal + shipping;
-        const emailHtml = `<!DOCTYPE html><html><body><div style="max-width:600px;margin:0 auto;font-family:sans-serif;color:#333;"><h2 style="color:#9e2b25;">VOREAS MEGASTORE</h2><p>${customerName || ''} 様</p><p>ご注文ありがとうございます。以下の内容で注文を受け付けました。</p><table style="width:100%;border-collapse:collapse;margin:20px 0;"><tr style="background:#f5f5f5;"><th style="padding:8px;text-align:left;">商品名</th><th style="padding:8px;">サイズ</th><th style="padding:8px;">選手名</th><th style="padding:8px;">数量</th><th style="padding:8px;text-align:right;">小計</th></tr>${rows}<tr><td colspan="4" style="padding:8px;text-align:right;">配送料</td><td style="padding:8px;text-align:right;">¥770</td></tr><tr><td colspan="4" style="padding:12px;text-align:right;font-weight:bold;">合計</td><td style="padding:12px;text-align:right;font-weight:bold;font-size:18px;">¥${grandTotal.toLocaleString()}</td></tr></table><h3 style="margin-top:30px;">お届け先</h3><p>${customerName || ''}<br>${shippingAddress?.zip || ''} ${shippingAddress?.prefecture || ''}${shippingAddress?.address1 || ''} ${shippingAddress?.address2 || ''} ${shippingAddress?.address3 || ''}<br>TEL: ${shippingAddress?.phone || ''}</p>${data.payment.receipt_url ? `<p style="margin-top:20px;"><a href="${data.payment.receipt_url}" style="color:#9e2b25;">レシートを確認する</a></p>` : ''}<hr style="border:none;border-top:1px solid #eee;margin:30px 0;"><p style="font-size:12px;color:#999;">VOREAS MEGASTORE — 10TH ANNIVERSARY</p></div></body></html>`;
+        const orderDate = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const paymentId = data.payment.id || '';
+        const paymentMethodLabel = paymentMethod === 'Bank' ? '銀行振込' : (paymentMethod || 'クレジットカード');
+
+        const emailHtml = `<!DOCTYPE html><html><body>
+<div style="max-width:600px;margin:0 auto;font-family:'Hiragino Sans','Meiryo',sans-serif;color:#333;">
+<div style="background:#9e2b25;padding:20px;text-align:center;">
+<h1 style="color:#fff;font-size:22px;margin:0;letter-spacing:0.05em;">VOREAS MEGASTORE</h1>
+<p style="color:#fff;font-size:11px;margin:4px 0 0;">10TH ANNIVERSARY</p>
+</div>
+
+<div style="padding:24px;">
+<p style="font-size:16px;">${customerName || ''} 様</p>
+<p style="font-size:14px;line-height:1.8;margin:16px 0;">このたびはVOREAS MEGASTOREをご利用いただき、誠にありがとうございます。以下の内容でご注文を承りました。</p>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">
+<tr style="background:#f5f5f5;"><th style="padding:10px;text-align:left;border-bottom:2px solid #9e2b25;">商品</th><th style="padding:10px;text-align:center;border-bottom:2px solid #9e2b25;">数量</th><th style="padding:10px;text-align:right;border-bottom:2px solid #9e2b25;">小計</th></tr>
+${rows}
+<tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">小計</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;">¥${itemTotal.toLocaleString()}</td></tr>
+<tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">配送料</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;">¥${shipping.toLocaleString()}</td></tr>
+<tr><td style="padding:14px;text-align:right;font-weight:bold;font-size:16px;">合計</td><td colspan="2" style="padding:14px;text-align:right;font-weight:bold;font-size:20px;color:#9e2b25;">¥${grandTotal.toLocaleString()}</td></tr>
+</table>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:13px;">
+<tr><td style="padding:8px 0;color:#888;width:100px;">注文日時</td><td style="padding:8px 0;">${orderDate}</td></tr>
+<tr><td style="padding:8px 0;color:#888;">注文番号</td><td style="padding:8px 0;">${paymentId}</td></tr>
+<tr><td style="padding:8px 0;color:#888;">お支払い方法</td><td style="padding:8px 0;">${paymentMethodLabel}</td></tr>
+</table>
+
+<h3 style="font-size:14px;border-left:3px solid #9e2b25;padding-left:10px;margin:24px 0 8px;">お届け先</h3>
+<p style="font-size:13px;line-height:1.8;">〒${shippingAddress?.zip || ''}<br>${shippingAddress?.prefecture || ''}${shippingAddress?.address1 || ''} ${shippingAddress?.address2 || ''} ${shippingAddress?.address3 || ''}<br>${customerName || ''}<br>TEL: ${shippingAddress?.phone || ''}</p>
+
+${data.payment.receipt_url ? `<p style="margin:20px 0;"><a href="${data.payment.receipt_url}" style="display:inline-block;padding:12px 32px;background:#9e2b25;color:#fff;text-decoration:none;border-radius:4px;font-size:14px;">レシートを確認する</a></p>` : ''}
+
+<div style="background:#f9f9f9;padding:16px;border-radius:4px;margin:24px 0;">
+<p style="font-size:13px;font-weight:bold;margin:0 0 8px;">⚠ 注意事項</p>
+<ul style="font-size:12px;line-height:1.8;color:#555;margin:0;padding-left:20px;">
+<li>こちらのメールアドレスは<strong>送信専用</strong>です。このメールに返信されても対応できません。</li>
+<li>ご不明な点がございましたら、お問い合わせフォームよりご連絡ください。</li>
+<li>発送完了時には別途メールでお知らせいたします。発送まで今しばらくお待ちください。</li>
+<li>受注販売期間中の商品は、生産完了後に順次発送いたします。お届けまでにお時間をいただく場合がございます。</li>
+<li>銀行振込をご選択の場合は、別途お送りする振込案内メールにてお支払いをお願いいたします。入金確認後に発送手配を開始します。</li>
+</ul>
+</div>
+
+<p style="margin:20px 0;">
+<a href="https://voreas-contact.pages.dev/contact" style="display:inline-block;padding:10px 28px;border:1px solid #9e2b25;color:#9e2b25;text-decoration:none;border-radius:4px;font-size:13px;">お問い合わせフォームはこちら</a>
+</p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+<p style="font-size:11px;color:#999;text-align:center;">VOREAS MEGASTORE — 10TH ANNIVERSARY<br>Copyright (C) 2026 VOREAS,INC. All Rights Reserved.</p>
+</div>
+</div>
+</body></html>`;
 
         const emailRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
