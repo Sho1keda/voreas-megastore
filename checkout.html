@@ -308,7 +308,7 @@
           }
           if (addr1) addr1.value = r.address2 + r.address3;
           
-          updateExpressButtons();
+           if (typeof updateExpressButtons === 'function') updateExpressButtons();
         }
       } catch (e) {
         console.log('Auto address failed:', e);
