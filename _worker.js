@@ -209,11 +209,14 @@ async function handlePayment(request, env) {
           const catalogData = await catalogRes.json();
 
           if (catalogData.objects) {
-            // Find discount by name (coupon code = discount name in Square Dashboard)
+            // Find discount by name (strip emoji prefixes for easier matching)
+            const stripEmoji = (s) => s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/gu, '').trim();
+            const inputClean = stripEmoji(couponCode).toUpperCase();
             const discount = catalogData.objects.find(obj => {
               if (obj.is_deleted) return false;
               const name = obj.discount_data?.name || '';
-              return name.toUpperCase() === couponCode.toUpperCase();
+              const nameClean = stripEmoji(name).toUpperCase();
+              return nameClean === inputClean || name.toUpperCase() === couponCode.toUpperCase();
             });
 
             if (discount) {
@@ -871,10 +874,14 @@ async function handleCouponValidate(request, env) {
     }
 
     // Filter out deleted discounts and find by name (case-insensitive)
+    // Also strip emoji prefixes from Square Dashboard discount names for easier matching
+    const stripEmoji = (s) => s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/gu, '').trim();
+    const inputClean = stripEmoji(couponCode).toUpperCase();
     const discount = catalogData.objects.find(obj => {
       if (obj.is_deleted) return false;
       const name = obj.discount_data?.name || '';
-      return name.toUpperCase() === couponCode.toUpperCase();
+      const nameClean = stripEmoji(name).toUpperCase();
+      return nameClean === inputClean || name.toUpperCase() === couponCode.toUpperCase();
     });
 
     if (!discount) {
