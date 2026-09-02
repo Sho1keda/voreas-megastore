@@ -458,7 +458,7 @@ ${data.payment.receipt_url ? `<p style="margin:20px 0;"><a href="${data.payment.
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'VOREAS MEGASTORE <onboarding@resend.dev>',
+            from: 'VOREAS MEGASTORE <noreply@voreas.app>',
             to: customerEmail,
             subject: '【VOREAS MEGASTORE】ご注文ありがとうございます',
             html: emailHtml,
