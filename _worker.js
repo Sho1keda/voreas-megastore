@@ -235,7 +235,6 @@ async function handlePayment(request, env) {
                   name: `クーポン割引 (${couponCode})`,
                   quantity: '1',
                   base_price_money: { amount: -discountAmount, currency: currency || 'JPY' },
-                  type: 'DISCOUNT',
                   catalog_object_id: discount.id,
                 });
               }
