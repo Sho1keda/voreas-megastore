@@ -858,8 +858,16 @@ async function handleCouponValidate(request, env) {
     });
     const catalogData = await catalogRes.json();
 
+    // Debug: log what the API returned
+    const allDiscounts = (catalogData.objects || []).map(obj => ({
+      id: obj.id,
+      name: obj.discount_data?.name || '(no name)',
+      type: obj.discount_data?.discount_type || '(no type)',
+      is_deleted: obj.is_deleted || false,
+    }));
+
     if (!catalogData.objects || catalogData.objects.length === 0) {
-      return json({ valid: false, message: '無効なクーポンコードです' });
+      return json({ valid: false, message: '無効なクーポンコードです', debug: { catalogCount: 0, catalogErrors: catalogData.errors || null } });
     }
 
     // Filter out deleted discounts and find by name (case-insensitive)
@@ -870,11 +878,7 @@ async function handleCouponValidate(request, env) {
     });
 
     if (!discount) {
-      // Debug: list available discount names for troubleshooting
-      const available = catalogData.objects
-        .filter(obj => !obj.is_deleted && obj.discount_data?.name)
-        .map(obj => obj.discount_data.name);
-      return json({ valid: false, message: '無効なクーポンコードです', availableDiscounts: available });
+      return json({ valid: false, message: '無効なクーポンコードです', availableDiscounts: allDiscounts, inputCode: couponCode });
     }
 
     const dd = discount.discount_data;
