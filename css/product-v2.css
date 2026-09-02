@@ -1060,6 +1060,37 @@
   outline: none;
 }
 
+.checkout-sidebar__coupon-btn {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--voreas-gold, #b8956a);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.checkout-sidebar__coupon-btn:hover {
+  opacity: 0.8;
+}
+
+.checkout-sidebar__coupon-msg {
+  font-size: 11px;
+  margin-top: 4px;
+  padding: 0 4px;
+}
+
+.checkout-sidebar__coupon-msg--ok {
+  color: #4a9;
+}
+
+.checkout-sidebar__coupon-msg--err {
+  color: #e55;
+}
+
 .checkout-sidebar__divider {
   height: 1px;
   background: #ddd;

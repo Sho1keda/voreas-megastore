@@ -141,7 +141,7 @@ async function handlePayment(request, env) {
     return json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const { sourceId, amount, currency, note, turnstileToken, items, customerEmail, customerName, shippingAddress, paymentMethod } = body;
+  const { sourceId, amount, currency, note, turnstileToken, items, customerEmail, customerName, shippingAddress, paymentMethod, couponCode } = body;
 
   if (!sourceId || !amount) {
     return json({ error: 'Missing required fields: sourceId, amount' }, 400);
@@ -192,6 +192,57 @@ async function handlePayment(request, env) {
         quantity: '1',
         base_price_money: { amount: 770, currency: currency || 'JPY' },
       });
+
+      // Apply coupon discount if provided
+      let couponStatus = 'none';
+      let discountAmount = 0;
+      if (couponCode) {
+        try {
+          // Search Square Catalog for a discount matching the coupon code
+          const catalogRes = await fetch(`${SQUARE_API}/catalog/list?types=DISCOUNT`, {
+            method: 'GET',
+            headers: {
+              'Square-Version': SQUARE_VERSION,
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          const catalogData = await catalogRes.json();
+
+          if (catalogData.objects) {
+            // Find discount by name (coupon code = discount name in Square Dashboard)
+            const discount = catalogData.objects.find(obj => {
+              const name = obj.discount_data?.name || '';
+              return name.toUpperCase() === couponCode.toUpperCase();
+            });
+
+            if (discount) {
+              const dd = discount.discount_data;
+              if (dd.discount_type === 'FIXED_PERCENTAGE' || dd.discount_type === 'VARIABLE_PERCENTAGE') {
+                const pct = parseFloat(dd.percentage || '0');
+                discountAmount = Math.round((Math.round(amount) - 770) * pct / 100);
+                couponStatus = `applied: ${pct}% (-¥${discountAmount})`;
+              } else if (dd.discount_type === 'FIXED_AMOUNT' || dd.discount_type === 'VARIABLE_AMOUNT') {
+                discountAmount = dd.amount_money?.amount || 0;
+                couponStatus = `applied: -¥${discountAmount}`;
+              }
+
+              if (discountAmount > 0) {
+                lineItems.push({
+                  name: `クーポン割引 (${couponCode})`,
+                  quantity: '1',
+                  base_price_money: { amount: -discountAmount, currency: currency || 'JPY' },
+                  type: 'DISCOUNT',
+                  catalog_object_id: discount.id,
+                });
+              }
+            } else {
+              couponStatus = 'invalid code';
+            }
+          }
+        } catch (e) {
+          couponStatus = `error: ${e.message}`;
+        }
+      }
 
       if (lineItems.length > 0) {
         const orderBody = {
@@ -405,6 +456,7 @@ async function handlePayment(request, env) {
       status: data.payment.status,
       emailStatus: emailStatus,
       sheetStatus: sheetStatus,
+      couponStatus: couponStatus,
     });
   } catch (err) {
     return json({ error: err.message }, 500);

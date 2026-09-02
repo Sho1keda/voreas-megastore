@@ -199,7 +199,8 @@
 
               <div class="checkout-sidebar__coupon">
                 <span class="checkout-sidebar__coupon-icon">🏷</span>
-                <input type="text" class="checkout-sidebar__coupon-input" placeholder="クーポンまたはギフトカードを...">
+                <input type="text" id="couponCode" class="checkout-sidebar__coupon-input" placeholder="クーポンまたはギフトカードを...">
+                <button type="button" id="applyCouponBtn" class="checkout-sidebar__coupon-btn">適用</button>
               </div>
 
               <div class="checkout-sidebar__divider"></div>
@@ -212,6 +213,10 @@
                 <div class="cart-summary-box__row">
                   <span>発送</span>
                   <span id="shipping">¥770</span>
+                </div>
+                <div class="cart-summary-box__row" id="discountRow" style="display:none;">
+                  <span>割引</span>
+                  <span id="discountAmount">-¥0</span>
                 </div>
                 <div class="cart-summary-box__row">
                   <span>税金</span>
@@ -540,6 +545,7 @@
               items: orderItems,
               customerEmail: email,
               customerName: name,
+              couponCode: document.getElementById('couponCode')?.value || '',
               shippingAddress: {
                 zip,
                 prefecture: pref,
@@ -636,6 +642,66 @@
           btn.disabled = false;
           btn.textContent = `注文する ${formatPrice(total)}`;
         }
+      });
+    })();
+
+    // Coupon apply button
+    (function() {
+      var applyBtn = document.getElementById('applyCouponBtn');
+      var couponInput = document.getElementById('couponCode');
+      if (!applyBtn || !couponInput) return;
+
+      applyBtn.addEventListener('click', function() {
+        var code = couponInput.value.trim();
+        if (!code) return;
+
+        applyBtn.textContent = '確認中...';
+        applyBtn.disabled = true;
+
+        fetch('/api/coupon-validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ couponCode: code, subtotal: window._subtotal || 0 }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          applyBtn.textContent = '適用';
+          applyBtn.disabled = false;
+
+          // Remove old message
+          var oldMsg = document.querySelector('.checkout-sidebar__coupon-msg');
+          if (oldMsg) oldMsg.remove();
+
+          if (data.valid && data.discountAmount > 0) {
+            // Show discount in summary
+            var discountRow = document.getElementById('discountRow');
+            var discountAmountEl = document.getElementById('discountAmount');
+            if (discountRow && discountAmountEl) {
+              discountRow.style.display = 'flex';
+              discountAmountEl.textContent = '-¥' + data.discountAmount.toLocaleString();
+            }
+            // Recalculate total
+            if (typeof window._recalculateTotal === 'function') {
+              window._recalculateTotal(data.discountAmount);
+            }
+            // Show success message
+            var msg = document.createElement('div');
+            msg.className = 'checkout-sidebar__coupon-msg checkout-sidebar__coupon-msg--ok';
+            msg.textContent = 'クーポン適用: -¥' + data.discountAmount.toLocaleString();
+            couponInput.closest('.checkout-sidebar__coupon').appendChild(msg);
+            applyBtn.textContent = '適用済';
+            applyBtn.style.background = '#4a9';
+          } else {
+            var errMsg = document.createElement('div');
+            errMsg.className = 'checkout-sidebar__coupon-msg checkout-sidebar__coupon-msg--err';
+            errMsg.textContent = data.message || '無効なクーポンコードです';
+            couponInput.closest('.checkout-sidebar__coupon').appendChild(errMsg);
+          }
+        })
+        .catch(function() {
+          applyBtn.textContent = '適用';
+          applyBtn.disabled = false;
+        });
       });
     })();
 
