@@ -421,8 +421,8 @@ async function handlePayment(request, env) {
 <tr style="background:#f5f5f5;"><th style="padding:10px;text-align:left;border-bottom:2px solid #9e2b25;">商品</th><th style="padding:10px;text-align:center;border-bottom:2px solid #9e2b25;">数量</th><th style="padding:10px;text-align:right;border-bottom:2px solid #9e2b25;">小計</th></tr>
 ${rows}
 <tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">小計</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;">¥${itemTotal.toLocaleString()}</td></tr>
-<tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">配送料</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;">¥${shipping.toLocaleString()}</td></tr>
 ${discountRow}
+<tr><td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">配送料</td><td colspan="2" style="padding:10px;text-align:right;border-bottom:1px solid #eee;">¥${shipping.toLocaleString()}</td></tr>
 <tr><td style="padding:14px;text-align:right;font-weight:bold;font-size:16px;">合計</td><td colspan="2" style="padding:14px;text-align:right;font-weight:bold;font-size:20px;color:#9e2b25;">¥${grandTotal.toLocaleString()}</td></tr>
 </table>
 
