@@ -224,7 +224,12 @@ async function handlePayment(request, env) {
               const dd = discount.discount_data;
               if (dd.discount_type === 'FIXED_PERCENTAGE' || dd.discount_type === 'VARIABLE_PERCENTAGE') {
                 const pct = parseFloat(dd.percentage || '0');
-                discountAmount = Math.round((Math.round(amount) - 770) * pct / 100);
+                // Calculate discount on item subtotal (not total which includes shipping and may already be discounted)
+                let itemSubtotal = 0;
+                for (const item of (items || [])) {
+                  itemSubtotal += (item.unitPrice || 0) * (item.quantity || 1);
+                }
+                discountAmount = Math.round(itemSubtotal * pct / 100);
                 couponStatus = `applied: ${pct}% (-¥${discountAmount})`;
               } else if (dd.discount_type === 'FIXED_AMOUNT' || dd.discount_type === 'VARIABLE_AMOUNT') {
                 discountAmount = dd.amount_money?.amount || 0;
