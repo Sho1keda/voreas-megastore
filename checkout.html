@@ -405,13 +405,15 @@
         // (total amount is needed for the request)
       })();
 
-      // Build paymentRequest from current cart total
+      // Build paymentRequest from current cart total (with coupon discount)
       function buildPaymentRequest() {
+        const couponDiscount = window._couponDiscount || 0;
+        const finalAmount = total - couponDiscount;
         return payments.paymentRequest({
           countryCode: 'JP',
           currencyCode: 'JPY',
           total: {
-            amount: String(total),
+            amount: String(finalAmount),
             label: 'VOREAS MEGASTORE',
             pending: false,
           },
