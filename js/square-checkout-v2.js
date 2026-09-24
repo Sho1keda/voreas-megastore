@@ -390,16 +390,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Build cart item
       const productTitle = document.querySelector('.product-info__title')?.textContent || `${productType}-${productColor}`;
       const productBadge = document.querySelector('.product-info__badge')?.textContent || '';
-      // Map color to local product image (Square doesn't have images set)
-      const colorImageMap = {
-        home: 'images/products/uniform-2026-27-red.jpg',
-        red: 'images/products/uniform-2026-27-red.jpg',
-        away: 'images/products/uniform-2026-27-black.jpg',
-        black: 'images/products/uniform-2026-27-black.jpg',
-        libero: 'images/products/uniform-2026-27-gray.jpg',
-        gray: 'images/products/uniform-2026-27-gray.jpg',
-        grey: 'images/products/uniform-2026-27-gray.jpg',
+      // Map color to local product image (fallback when Square has no image)
+      const authImages = {
+        home: 'images/products/authentic-2026-27-red.jpg',
+        red: 'images/products/authentic-2026-27-red.jpg',
+        away: 'images/products/authentic-2026-27-black.jpg',
+        black: 'images/products/authentic-2026-27-black.jpg',
+        libero: 'images/products/authentic-2026-27-gray.jpg',
+        gray: 'images/products/authentic-2026-27-gray.jpg',
+        grey: 'images/products/authentic-2026-27-gray.jpg',
       };
+      const repImages = {
+        home: 'images/products/replica-2026-27-red.png',
+        red: 'images/products/replica-2026-27-red.png',
+        away: 'images/products/replica-2026-27-black.png',
+        black: 'images/products/replica-2026-27-black.png',
+        libero: 'images/products/replica-2026-27-gray.png',
+        gray: 'images/products/replica-2026-27-gray.png',
+        grey: 'images/products/replica-2026-27-gray.png',
+      };
+      const colorImageMap = (productType === 'authentic') ? authImages : repImages;
       const fallbackImage = colorImageMap[productColor] || '';
       const cartItem = {
         productId: squareProduct?.id || `${productType}-${productColor}`,
