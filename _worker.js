@@ -99,7 +99,7 @@ async function handleProducts(request, env) {
           }));
 
         let imageUrl = null;
-        const imageId = obj.item_data.image_id;
+        const imageId = (obj.item_data.image_ids || [])[0];
         if (imageId) {
           imageUrl = await fetchImageUrl(token, imageId);
         }
