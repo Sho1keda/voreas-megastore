@@ -176,7 +176,8 @@ async function handlePayment(request, env) {
     let orderId = null;
     let couponStatus = 'none';
     let discountAmount = 0;
-    
+    let orderErrors = null; // populated when Square CreateOrder fails (surfaced in responses for debugging)
+    const orderDiscounts = []; // Square-standard order-level discounts (OrderLineItemDiscount)
     if (items && items.length > 0) {
       const lineItems = items.map(item => ({
         catalog_object_id: item.variationId || undefined,
@@ -237,11 +238,18 @@ async function handlePayment(request, env) {
               }
 
               if (discountAmount > 0) {
-                lineItems.push({
+                // Apply the coupon as a Square-standard order-level manual discount.
+                // NOTE: a standalone discount line item with
+                // line_items[].catalog_object_id = CatalogDiscount ID is invalid —
+                // catalog_object_id must reference a CatalogItem/CatalogItemVariation,
+                // so CreateOrder rejected the whole request and the payment was
+                // created WITHOUT the order (no fulfillment/recipient → the
+                // Square Dashboard shipping list shows no buyer name).
+                orderDiscounts.push({
                   name: `クーポン割引 (${couponCode})`,
-                  quantity: '1',
-                  base_price_money: { amount: -discountAmount, currency: currency || 'JPY' },
-                  catalog_object_id: discount.id,
+                  type: 'FIXED_AMOUNT',
+                  amount_money: { amount: discountAmount, currency: currency || 'JPY' },
+                  scope: 'ORDER',
                 });
               }
             } else {
@@ -259,6 +267,7 @@ async function handlePayment(request, env) {
           order: {
             location_id: locationId,
             line_items: lineItems,
+            ...(orderDiscounts.length > 0 ? { discounts: orderDiscounts } : {}),
             ...(shippingAddress ? {
               fulfillments: [{
                 type: 'SHIPMENT',
@@ -293,8 +302,12 @@ async function handlePayment(request, env) {
           const orderData = await orderRes.json();
           if (!orderData.errors && orderData.order) {
             orderId = orderData.order.id;
+          } else if (orderData.errors) {
+            orderErrors = orderData.errors;
+            console.log('Square order creation failed (payment will proceed without order):', JSON.stringify(orderData.errors));
           }
         } catch (e) {
+          orderErrors = [{ category: 'NETWORK', detail: `Order creation fetch failed: ${e.message}` }];
           console.log('Order creation failed, falling back to simple payment:', e.message);
         }
       }
@@ -356,12 +369,15 @@ async function handlePayment(request, env) {
     }
 
     // Step 2: Create payment, optionally linked to the order and customer
+    // If the Square order could not be created, mark it on the payment note so
+    // the Dashboard shows why the payment is not linked to an order.
+    const paymentNote = (note || `VOREAS MEGASTORE order`) + (orderId ? '' : ' [Square注文未作成 — 紐付けなし]');
     const paymentBody = {
       source_id: sourceId,
       idempotency_key: idempotencyKey,
       amount_money: { amount: Math.round(amount), currency: currency || 'JPY' },
       location_id: locationId,
-      note: note || `VOREAS MEGASTORE order`,
+      note: paymentNote,
       ...(customerEmail ? { buyer_email_address: customerEmail } : {}),
       ...(orderId ? { order_id: orderId } : {}),
       ...(customerId ? { customer_id: customerId } : {}),
@@ -380,7 +396,15 @@ async function handlePayment(request, env) {
     const data = await res.json();
 
     if (data.errors) {
-      return json({ error: 'Payment failed', details: data.errors }, 400);
+      // Include orderId/couponStatus/orderErrors so order-vs-payment failures are
+      // distinguishable from the client response (previously silent).
+      return json({
+        error: 'Payment failed',
+        details: data.errors,
+        orderId: orderId || null,
+        couponStatus: couponStatus,
+        ...(orderErrors ? { orderErrors: orderErrors } : {}),
+      }, 400);
     }
 
     // Step 3: Send receipt email directly via Resend API (reliable, no Apps Script dependency)
@@ -524,6 +548,7 @@ ${data.payment.receipt_url ? `<p style="margin:20px 0;"><a href="${data.payment.
       emailStatus: emailStatus,
       sheetStatus: sheetStatus,
       couponStatus: couponStatus,
+      ...(orderErrors ? { orderErrors: orderErrors } : {}),
     });
   } catch (err) {
     return json({ error: err.message }, 500);
