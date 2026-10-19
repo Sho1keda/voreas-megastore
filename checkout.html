@@ -282,7 +282,7 @@
     </div>
   </footer>
 
-  <script src="js/square-checkout-v2.js?v=4"></script>
+  <script src="js/square-checkout-v2.js?v=6"></script>
   <script>
     // Auto-fill address from postal code
     async function autoAddress(event) {
@@ -713,6 +713,17 @@
           applyBtn.disabled = false;
         });
       });
+    })();
+
+    // Meta Shops checkout URL: auto-apply coupon passed via /meta-checkout.html?coupon=
+    (function() {
+      var metaCoupon = sessionStorage.getItem('meta_coupon');
+      var input = document.getElementById('couponCode');
+      var btn = document.getElementById('applyCouponBtn');
+      if (!metaCoupon || !input || !btn) return;
+      sessionStorage.removeItem('meta_coupon');
+      input.value = metaCoupon;
+      btn.click();
     })();
 
     function loadScript(src) {

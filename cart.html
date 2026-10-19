@@ -58,6 +58,10 @@
             <a href="/#ec-section" class="cart-continue">‹ 買い物を続ける</a>
             <h1 class="cart-page__title">カート</h1>
             <p class="cart-page__count" id="cartCount"></p>
+            <p class="cart-page__notice" id="metaCartNotice" style="display:none;color:#c33;font-size:14px;margin:8px 0;"></p>
+            <script>
+              (function(){var n=sessionStorage.getItem('meta_cart_notice');if(!n)return;sessionStorage.removeItem('meta_cart_notice');var el=document.getElementById('metaCartNotice');el.textContent=n;el.style.display='';})();
+            </script>
 
             <div id="cartItems" class="cart-items"></div>
 
@@ -149,7 +153,7 @@
     </div>
   </footer>
 
-  <script src="js/square-checkout-v2.js?v=4"></script>
+  <script src="js/square-checkout-v2.js?v=6"></script>
   <script>
     (function() {
       const cart = getCart();

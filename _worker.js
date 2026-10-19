@@ -845,6 +845,191 @@ async function handleSquareWebhook(request, env) {
   return json({ received: true, type: eventType, action: action, paymentId: paymentId });
 }
 
+// ── Meta (Facebook/Instagram) catalog integration ──
+// GET /api/meta-feed.csv  — Meta Commerce Manager scheduled data feed (CSV),
+//   generated live from Square Catalog. One row per sellable variation.
+//   id = Square variation ID (same ID the cart/checkout uses), grouped by
+//   product page via item_group_id. Spec:
+//   https://www.facebook.com/business/help/120325381656392
+//   https://www.facebook.com/business/help/2256580051262113 (variants)
+// GET /api/meta-cart?products=ID:QTY,ID:QTY — resolves Meta checkout-URL
+//   product IDs into cart items for /meta-checkout.html. Spec:
+//   https://developers.facebook.com/documentation/ads-commerce/commerce-platform/setup-checkout-url
+
+const META_PAGES = {
+  'authentic-home':   { title: '2026-27シーズン オーセンティックユニフォーム[HOME]', badge: 'HOME [RED]', color: 'Red', age: 'adult', image: 'images/products/authentic-2026-27-red.jpg' },
+  'authentic-away':   { title: '2026-27シーズン オーセンティックユニフォーム[AWAY]', badge: 'AWAY [BLACK]', color: 'Black', age: 'adult', image: 'images/products/authentic-2026-27-black.jpg' },
+  'authentic-libero': { title: '2026-27シーズン オーセンティックユニフォーム[LIBERO]', badge: 'LIBERO [GRAY]', color: 'Gray', age: 'adult', image: 'images/products/authentic-2026-27-gray.jpg' },
+  'replica-home':     { title: '2026-27シーズン レプリカユニフォーム[HOME]', badge: 'HOME [RED] — REPLICA', color: 'Red', age: 'adult', image: 'images/products/replica-2026-27-red.png' },
+  'replica-away':     { title: '2026-27シーズン レプリカユニフォーム[AWAY]', badge: 'AWAY [BLACK] — REPLICA', color: 'Black', age: 'adult', image: 'images/products/replica-2026-27-black.png' },
+  'replica-libero':   { title: '2026-27シーズン レプリカユニフォーム[LIBERO]', badge: 'LIBERO [GRAY] — REPLICA', color: 'Gray', age: 'adult', image: 'images/products/replica-2026-27-gray.png' },
+  'kids-home':        { title: '2026-27シーズン レプリカユニフォームKIDS[HOME]', badge: 'HOME [RED] — KIDS', color: 'Red', age: 'kids', image: 'images/products/replica-2026-27-red.png' },
+  'kids-away':        { title: '2026-27シーズン レプリカユニフォームKIDS[AWAY]', badge: 'AWAY [BLACK] — KIDS', color: 'Black', age: 'kids', image: 'images/products/replica-2026-27-black.png' },
+  'kids-libero':      { title: '2026-27シーズン レプリカユニフォームKIDS[LIBERO]', badge: 'LIBERO [GRAY] — KIDS', color: 'Gray', age: 'kids', image: 'images/products/replica-2026-27-gray.png' },
+};
+const META_BRAND = 'VOREAS HOKKAIDO';
+const META_GOOGLE_CATEGORY = '3598'; // Apparel & Accessories > Clothing > Uniforms > Sports Uniforms
+const META_CACHE_SECONDS = 900;
+
+// "2S, NAKAMICHI/#2" → { size: '2S', playerName: 'NAKAMICHI', playerNum: '2' }
+function parseMetaVariationName(name) {
+  const t = (name || '').trim();
+  const m = t.match(/^([^,]+),\s*(.+?)\/#(\d+)$/);
+  if (m) return { size: m[1].trim(), playerName: m[2].trim(), playerNum: m[3] };
+  return { size: t, playerName: null, playerNum: null };
+}
+
+function metaPlainText(s) {
+  return String(s || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 9999);
+}
+
+function isVariationSoldOut(v, locationId) {
+  const d = v.item_variation_data || {};
+  if (d.sellable === false) return true;
+  return (d.location_overrides || []).some(o =>
+    o.sold_out === true && (!locationId || o.location_id === locationId));
+}
+
+// Build every Meta catalog row from Square Catalog (shared by feed + cart resolver).
+async function buildMetaRows(env, origin) {
+  const token = env.SQUARE_ACCESS_TOKEN;
+  const locationId = env.SQUARE_LOCATION_ID || 'WMTQJASMPBH13';
+  const items = await fetchAllCatalogItems(token);
+  const rows = [];
+  for (const [key, page] of Object.entries(META_PAGES)) {
+    const pattern = SEARCH_PATTERNS[key];
+    const [type, color] = key.split('-');
+    const matched = items.filter(o => o.type === 'ITEM' && !o.is_deleted &&
+      pattern.test((o.item_data && o.item_data.name) || ''));
+    const pageUrl = `${origin}/product-${key}`;
+    for (const item of matched) {
+      const desc = metaPlainText(item.item_data.description) ||
+        `${page.title}（${page.badge}）VOREAS HOKKAIDO 公式ユニフォーム`;
+      for (const v of (item.item_data.variations || [])) {
+        if (v.is_deleted) continue;
+        const d = v.item_variation_data || {};
+        const amount = d.price_money && d.price_money.amount;
+        if (!amount) continue; // Meta requires a price
+        const p = parseMetaVariationName(d.name);
+        const playerLabel = p.playerNum ? `#${p.playerNum} ${p.playerName}` : '';
+        rows.push({
+          id: v.id,
+          item_group_id: `voreas-2026-27-${key}`,
+          title: playerLabel ? `${page.title} ${playerLabel}` : page.title,
+          description: desc,
+          availability: isVariationSoldOut(v, locationId) ? 'out of stock' : 'in stock',
+          condition: 'new',
+          price: `${amount} ${(d.price_money.currency || 'JPY')}`,
+          link: `${pageUrl}?variant=${encodeURIComponent(v.id)}`,
+          image_link: `${origin}/${page.image}`,
+          brand: META_BRAND,
+          size: p.size,
+          color: page.color,
+          gender: 'unisex',
+          age_group: page.age,
+          google_product_category: META_GOOGLE_CATEGORY,
+          additional_variant_attribute: playerLabel ? `背番号:${playerLabel}` : '背番号:なし',
+          internal_label: `'${type}','${color}'`,
+          // not exported to the feed; used by /api/meta-cart
+          _cart: {
+            productId: item.id,
+            productType: type,
+            productColor: color,
+            name: page.title,
+            badge: page.badge,
+            size: p.size,
+            player: p.playerNum ? `${p.playerName}/#${p.playerNum}` : '',
+            unitPrice: amount,
+            variationId: v.id,
+            imageUrl: `/${page.image}`,
+            soldOut: isVariationSoldOut(v, locationId),
+          },
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+const META_FEED_FIELDS = ['id', 'item_group_id', 'title', 'description', 'availability',
+  'condition', 'price', 'link', 'image_link', 'brand', 'size', 'color', 'gender',
+  'age_group', 'google_product_category', 'additional_variant_attribute', 'internal_label'];
+
+function csvCell(v) {
+  const s = String(v == null ? '' : v);
+  return /[",\n\r\s]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+async function cachedMeta(request, ctx, build) {
+  const cache = caches.default;
+  const cacheKey = new Request(request.url, { method: 'GET' });
+  const hit = await cache.match(cacheKey);
+  if (hit) return hit;
+  const res = await build();
+  if (res.status === 200 && ctx) ctx.waitUntil(cache.put(cacheKey, res.clone()));
+  return res;
+}
+
+async function handleMetaFeed(request, env, ctx) {
+  if (!env.SQUARE_ACCESS_TOKEN) return json({ error: 'Square API not configured' }, 503);
+  const url = new URL(request.url);
+  return cachedMeta(request, ctx, async () => {
+    try {
+      const rows = await buildMetaRows(env, url.origin);
+      const lines = [META_FEED_FIELDS.join(',')];
+      for (const r of rows) lines.push(META_FEED_FIELDS.map(f => csvCell(r[f])).join(','));
+      return new Response('\uFEFF' + lines.join('\r\n') + '\r\n', {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Cache-Control': `public, max-age=${META_CACHE_SECONDS}`,
+          'X-Robots-Tag': 'noindex',
+        },
+      });
+    } catch (err) {
+      return json({ error: err.message }, 500);
+    }
+  });
+}
+
+async function handleMetaCart(request, env, ctx) {
+  if (!env.SQUARE_ACCESS_TOKEN) return json({ error: 'Square API not configured' }, 503);
+  const url = new URL(request.url);
+  const wanted = [];
+  for (const entry of (url.searchParams.get('products') || '').split(',')) {
+    const [id, q] = entry.split(':');
+    const qty = parseInt(q, 10);
+    if (id && id.trim()) wanted.push({ id: id.trim(), quantity: qty > 0 ? Math.min(qty, 99) : 1 });
+  }
+  if (wanted.length === 0) return json({ items: [], missing: [] });
+  try {
+    // Reuse a cached copy of the catalog rows (keyed on origin only).
+    const rowsRes = await cachedMeta(new Request(`${url.origin}/api/meta-cart/_rows`), ctx, async () =>
+      new Response(JSON.stringify((await buildMetaRows(env, url.origin)).map(r => r._cart)), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${META_CACHE_SECONDS}` },
+      }));
+    const all = await rowsRes.json();
+    const byId = new Map(all.map(c => [c.variationId, c]));
+    const items = [], missing = [], soldOut = [];
+    for (const w of wanted) {
+      const c = byId.get(w.id);
+      if (!c) { missing.push(w.id); continue; }
+      if (c.soldOut) { soldOut.push(w.id); continue; }
+      const { soldOut: _s, ...cartItem } = c;
+      items.push({ ...cartItem, quantity: w.quantity });
+    }
+    return json({ items, missing, soldOut }, 200, { 'Cache-Control': 'no-store' });
+  } catch (err) {
+    return json({ error: err.message }, 500);
+  }
+}
+
 // ── Main entry ──
 // Only intercept /api/* routes. Everything else goes to static assets
 // WITHOUT modification (preserving correct Content-Type headers).
@@ -907,6 +1092,12 @@ export default {
         } catch (e) {
           return json({ error: e.message, webhookUrl: webhookUrl.substring(0, 50) + '...' });
         }
+      }
+      if (path === '/api/meta-feed.csv' && (request.method === 'GET' || request.method === 'HEAD')) {
+        return handleMetaFeed(request, env, ctx);
+      }
+      if (path === '/api/meta-cart' && request.method === 'GET') {
+        return handleMetaCart(request, env, ctx);
       }
       if (path === '/api/coupon-validate' && request.method === 'POST') {
         return handleCouponValidate(request, env);

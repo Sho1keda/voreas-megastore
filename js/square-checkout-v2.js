@@ -140,8 +140,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Square sync: using mockup data');
   }
 
+  // --- 1b. Preselect variation from ?variant=<Square variation ID> ---
+  // Meta catalog / Instagram product-tag links point to /product-xxx?variant=ID
+  // so the tagged size + player is already selected on arrival.
+  preselectVariantFromUrl();
+
   // --- 2. Replace "予約する" with "カートに入れる" ---
   setupAddToCartButton();
+
+  function preselectVariantFromUrl() {
+    let variantId = null;
+    try { variantId = new URLSearchParams(window.location.search).get('variant'); } catch (e) {}
+    if (!variantId || !allSquareVariations.length) return;
+    const v = allSquareVariations.find(x => x.id === variantId);
+    if (!v) return;
+    const parsed = parseVariationName(v.name);
+    const ps = document.getElementById('playerSelect');
+    if (ps && parsed.playerNum) {
+      const opt = Array.from(ps.options).find(o =>
+        o.dataset.playerNum === parsed.playerNum &&
+        (o.dataset.playerName || '').toUpperCase() === (parsed.playerName || '').toUpperCase());
+      if (opt) {
+        ps.value = opt.value;
+        selectedPlayer = opt.value;
+      }
+    }
+    const btn = Array.from(document.querySelectorAll('.size-btn'))
+      .find(b => (b.dataset.size || '').toUpperCase() === parsed.size.toUpperCase());
+    if (btn && !btn.disabled) btn.click();
+  }
 
   // --- Helper functions ---
 

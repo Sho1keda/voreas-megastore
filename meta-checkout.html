@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>カートを準備しています – VOREAS MEGASTORE</title>
+  <link rel="stylesheet" href="css/style-v2.css?v=2">
+  <link rel="icon" href="images/voreas-favicon.png" type="image/png">
+  <style>
+    .mc-wrap{min-height:60vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;text-align:center;font-family:'Noto Sans JP',sans-serif}
+    .mc-box{max-width:480px}
+    .mc-msg{font-size:16px;line-height:1.8;margin:0 0 16px}
+    .mc-err{color:#c33;font-size:14px;line-height:1.7}
+    .mc-link{display:inline-block;margin-top:16px;padding:12px 28px;background:#111;color:#fff;text-decoration:none;border-radius:4px}
+  </style>
+</head>
+<body data-page="meta-checkout">
+  <div class="mc-wrap"><div class="mc-box">
+    <p class="mc-msg" id="mcMsg">カートを準備しています…</p>
+    <div class="mc-err" id="mcErr"></div>
+    <a class="mc-link" id="mcLink" href="/#ec-section" style="display:none">商品一覧へ</a>
+  </div></div>
+  <script>
+  /*
+   * Meta Shops checkout URL endpoint.
+   * Meta sends: /meta-checkout.html?products=<ID>%3A<QTY>%2C...&coupon=<CODE>&cart_origin=...&utm_*=...
+   * Spec: https://developers.facebook.com/documentation/ads-commerce/commerce-platform/setup-checkout-url
+   * IDs are Square variation IDs (= Meta catalog content IDs from /api/meta-feed.csv).
+   * The cart is cleared and rebuilt, then the user continues through the normal cart → checkout flow.
+   */
+  (async function () {
+    var params = new URLSearchParams(window.location.search);
+    var products = params.get('products') || '';
+    var coupon = (params.get('coupon') || '').trim();
+    var msg = document.getElementById('mcMsg');
+    var err = document.getElementById('mcErr');
+    var link = document.getElementById('mcLink');
+    function fail(text) {
+      msg.textContent = 'カートを準備できませんでした';
+      err.textContent = text;
+      link.style.display = '';
+    }
+    if (!products) { fail('商品が指定されていません。'); return; }
+    try {
+      var res = await fetch('/api/meta-cart?products=' + encodeURIComponent(products));
+      var data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || ('HTTP ' + res.status));
+      var notes = [];
+      if (data.soldOut && data.soldOut.length) notes.push('売り切れのため追加できなかった商品があります（' + data.soldOut.length + '点）。');
+      if (data.missing && data.missing.length) notes.push('販売終了または見つからない商品があります（' + data.missing.length + '点）。');
+      if (!data.items || data.items.length === 0) { fail(notes.join(' ') || '追加できる商品がありません。'); return; }
+      // Clear the cart and add exactly what Meta sent (best practice: clear cart each call)
+      localStorage.setItem('voreas_cart', JSON.stringify(data.items));
+      if (coupon) sessionStorage.setItem('meta_coupon', coupon); else sessionStorage.removeItem('meta_coupon');
+      if (notes.length) sessionStorage.setItem('meta_cart_notice', notes.join(' ')); else sessionStorage.removeItem('meta_cart_notice');
+      // Keep tracking params (cart_origin, utm_*) on the redirect
+      params.delete('products');
+      var qs = params.toString();
+      window.location.replace('/cart.html' + (qs ? '?' + qs : ''));
+    } catch (e) {
+      fail('通信エラーが発生しました。時間をおいて再度お試しください。');
+    }
+  })();
+  </script>
+</body>
+</html>
