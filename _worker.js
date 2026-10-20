@@ -771,11 +771,13 @@ async function handleSquareWebhook(request, env) {
     return json({ error: 'Invalid body' }, 400);
   }
 
-  // Verify Square webhook signature (if signature key is set)
+  // Fail closed for ALL event types. Never process unsigned refund/payment events.
   const signature = request.headers.get('x-square-hmacsha256-signature');
   const webhookKey = env.SQUARE_WEBHOOK_SIGNATURE_KEY;
   
-  if (webhookKey && signature) {
+  if (!webhookKey) return json({ error: 'Webhook verification not configured' }, 503);
+  if (!signature) return json({ error: 'Invalid signature' }, 401);
+  {
     // Square signature = base64(HMAC-SHA256(key, notification_url + body))
     const notificationUrl = 'https://voreas-megastore.pages.dev/api/webhooks/square';
     const encoder = new TextEncoder();
@@ -788,10 +790,9 @@ async function handleSquareWebhook(request, env) {
     let binary = '';
     for (const b of expectedBytes) binary += String.fromCharCode(b);
     const expectedB64 = btoa(binary);
-    if (signature !== expectedB64) {
-      // Log mismatch but don't block in production for now
-      console.log('Signature mismatch - expected:', expectedB64.substring(0, 20), '... got:', signature.substring(0, 20), '...');
-    }
+    let mismatch = signature.length ^ expectedB64.length;
+    for (let i = 0; i < expectedB64.length; i++) mismatch |= expectedB64.charCodeAt(i) ^ (signature.charCodeAt(i) || 0);
+    if (mismatch) return json({ error: 'Invalid signature' }, 401);
   }
 
   let event;
@@ -802,6 +803,7 @@ async function handleSquareWebhook(request, env) {
   }
 
   const eventType = event.type || '';
+  if (eventType === 'order.updated') return handleShippingUpdated(event, env);
   
   // Extract payment ID and status from different event types
   let paymentId = '';
@@ -1047,6 +1049,9 @@ export default {
       if (path === '/api/payment' && request.method === 'POST') {
         return handlePayment(request, env);
       }
+      if (path === '/api/manage/notify-shipped' && request.method === 'POST') {
+        return handleNotifyShipped(request, env);
+      }
       if (path === '/api/manage/register' && request.method === 'POST') {
         return handleRegister(request, env);
       }
@@ -1109,6 +1114,196 @@ export default {
     return env.ASSETS.fetch(request);
   },
 };
+
+// Shipping recovery is deliberately isolated from checkout and Square writes.
+// D1 UNIQUE claims are permanent: an ambiguous provider response is NEVER retried
+// automatically (Resend's idempotency retention alone is only 24 hours).
+function shippingJson(data, status = 200) {
+  return json(data, status, { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+}
+function cleanTracking(value) {
+  return String(value || '').normalize('NFKC').replace(/[\s\-‐‑‒–—―−ー]/gu, '');
+}
+function shippingCarrier(carrier, tracking) {
+  if (/ヤマト|yamato|kuroneko/i.test(carrier)) return { carrier: 'ヤマト運輸', confirmed: true, url: `https://toi.kuronekoyamato.co.jp/cgi-bin/tneko?number00=${encodeURIComponent(tracking)}` };
+  if (/佐川|sagawa/i.test(carrier)) return { carrier: '佐川急便', confirmed: true, url: `https://k2k.sagawa-exp.co.jp/p/sagawa/web/okurijoinput.jsp?okurijoNo=${encodeURIComponent(tracking)}` };
+  if (/日本郵便|ゆう|japan.?post/i.test(carrier)) return { carrier: '日本郵便', confirmed: true, url: `https://trackings.post.japanpost.jp/services/srv/search/direct?reqCodeNo1=${encodeURIComponent(tracking)}&searchKind=S002&locale=ja` };
+  return { carrier: /^\d{12}$/.test(tracking) ? 'ヤマト/佐川/日本郵便（番号のみでは特定不可）' : '要確認', confirmed: false, url: '' };
+}
+async function shippingSquare(env, path, body) {
+  const res = await fetch(`${SQUARE_API}${path}`, { signal: AbortSignal.timeout(4000), method: body ? 'POST' : 'GET', headers: { Authorization: `Bearer ${env.SQUARE_ACCESS_TOKEN}`, 'Square-Version': SQUARE_VERSION, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const data = await res.json();
+  if (!res.ok || data.errors) throw new Error(`Square read failed (${res.status})`);
+  return data;
+}
+async function shippingManifest(env, selectedOrders = null, recipientOnly = false) {
+  const orders = []; let cursor;
+  if (selectedOrders) orders.push(...selectedOrders);
+  else {
+  do {
+    const data = await shippingSquare(env, '/orders/search', { location_ids: [env.SQUARE_LOCATION_ID || 'WMTQJASMPBH13'], limit: 500, query: { filter: { date_time_filter: { created_at: { start_at: '2026-09-01T00:00:00Z' } } }, sort: { sort_field: 'CREATED_AT', sort_order: 'ASC' } }, ...(cursor ? { cursor } : {}) });
+    orders.push(...(data.orders || [])); cursor = data.cursor;
+  } while (cursor);
+  }
+  const rows = [], excluded = [];
+  for (const order of orders) {
+    for (const f of order.fulfillments || []) {
+      const s = f.shipment_details;
+      if (f.type !== 'SHIPMENT' || !s?.tracking_number) continue;
+      if (order.source?.name !== 'voreas-ec' || order.state === 'CANCELED' || f.state !== 'COMPLETED') {
+        excluded.push({ orderId: order.id, fulfillmentUid: f.uid, reason: 'source_or_state_not_eligible' }); continue;
+      }
+      const recipient = s.recipient || {};
+      let email = recipient.email_address || '', emailSource = email ? 'shipment.recipient.email_address' : '';
+      // Existing customer/payment records only; never fuzzy-match by name.
+      if (!email && !recipientOnly) {
+        const emails = new Set();
+        for (const tender of order.tenders || []) {
+          if (!tender.payment_id) continue;
+          const payment = (await shippingSquare(env, `/payments/${encodeURIComponent(tender.payment_id)}`)).payment;
+          if (payment?.status === 'COMPLETED' && payment.buyer_email_address) emails.add(payment.buyer_email_address.trim().toLowerCase());
+        }
+        if (emails.size === 1) { email = [...emails][0]; emailSource = 'payment.buyer_email_address'; }
+        if (!email && emails.size === 0 && (recipient.customer_id || order.customer_id)) {
+          const customer = (await shippingSquare(env, `/customers/${encodeURIComponent(recipient.customer_id || order.customer_id)}`)).customer;
+          email = customer?.email_address || ''; if (email) emailSource = 'customer.email_address';
+        }
+      }
+      email = email.trim().toLowerCase();
+      const trackingNumber = cleanTracking(s.tracking_number), c = shippingCarrier(s.carrier || '', trackingNumber);
+      rows.push({ orderId: order.id, fulfillmentUid: f.uid, name: recipient.display_name || '', email, emailSource, trackingNumber, rawTrackingNumber: s.tracking_number, carrier: c.carrier, carrierSource: c.confirmed ? 'Square shipment_details.carrier' : 'number_format_unconfirmed', trackingUrl: c.url, shippedAt: s.shipped_at || '', issue: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'missing_or_invalid_email' : !/^\d{10,14}$/.test(trackingNumber) ? 'invalid_tracking' : !c.confirmed ? 'carrier_confirmation_required' : '' });
+    }
+  }
+  // One notification per order. Split shipments are held for manual review.
+  for (const row of rows) if (rows.filter(r => r.orderId === row.orderId).length > 1 || orders.find(o => o.id === row.orderId)?.fulfillments?.filter(f => f.type === 'SHIPMENT').length > 1) row.issue = 'multiple_shipments_manual_review';
+  rows.sort((a, b) => a.orderId.localeCompare(b.orderId) || a.fulfillmentUid.localeCompare(b.fulfillmentUid));
+  const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(rows))))).map(b => b.toString(16).padStart(2, '0')).join('');
+  return { hash, scannedOrders: orders.length, rows, excluded, missingEmail: rows.filter(r => r.issue === 'missing_or_invalid_email'), held: rows.filter(r => r.issue) };
+}
+function shippingEmail(row, test = false) {
+  const text = `${row.name || 'お客様'} 様\n\nVOREAS MEGASTOREをご利用いただきありがとうございます。\nご注文商品の発送が完了しましたので、お知らせいたします。\n発送通知のご案内が遅くなりましたことをお詫び申し上げます。すでにお受け取り済みの場合は、行き違いのご案内となりますことをご了承ください。\n\n注文番号：${row.orderId}\n配送会社：${row.carrier}\n追跡番号：${row.trackingNumber}\n配送状況の確認：${row.trackingUrl}\n\n配送状況の反映に時間がかかる場合があります。到着日時は配送会社の追跡ページでご確認ください。\nこのメールは送信専用です。お問い合わせ：https://voreas-contact.pages.dev/contact\n\nVOREAS MEGASTORE`;
+  return { from: 'VOREAS MEGASTORE <noreply@voreas.app>', to: test ? 's-ikeda@remium.jp' : row.email, subject: `${test ? '【テスト・顧客未送信】' : ''}【VOREAS MEGASTORE】商品発送のお知らせ`, text };
+}
+async function shippingExclusionsReady(env) {
+  const r = await env.SHIPPING_DB.prepare("SELECT COUNT(*) AS count FROM shipping_exclusions WHERE batch = 'legacy-185-20261020'").first();
+  return r?.count === 185;
+}
+async function shippingObserve(env, eventId, orderId, outcome, detail = '') {
+  await env.SHIPPING_DB.prepare('INSERT INTO shipping_observations (event_id, order_id, outcome, detail, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(event_id) DO UPDATE SET outcome=excluded.outcome, detail=excluded.detail, updated_at=excluded.updated_at').bind(eventId, orderId, outcome, detail, new Date().toISOString()).run();
+}
+async function handleShippingUpdated(event, env) {
+  // order.updated carries a summary, NOT the full order. Read current state so
+  // late/out-of-order notifications cannot regress fulfillment state.
+  const orderId = event.data?.object?.order_updated?.order_id;
+  if (!event.event_id || typeof orderId !== 'string' || !orderId) return shippingJson({ error: 'Malformed order.updated' }, 400);
+  if (!env.SHIPPING_DB) return shippingJson({ error: 'Shipping DB not configured' }, 503);
+  const record = async (outcome, detail = '') => {
+    await shippingObserve(env, event.event_id, orderId, outcome, detail);
+    return shippingJson({ received: true, shipping: outcome });
+  };
+  try {
+    const excluded = await env.SHIPPING_DB.prepare('SELECT reason FROM shipping_exclusions WHERE order_id = ?').bind(orderId).first();
+    if (excluded) return await record('excluded_permanently');
+    if (env.SHIPPING_AUTO_ENABLED !== 'true') return await record('disabled');
+    if (!env.RESEND_API_KEY || !env.SQUARE_ACCESS_TOKEN || !(await shippingExclusionsReady(env))) return shippingJson({ error: 'Shipping safety prerequisites missing' }, 503);
+    const start = Date.parse(env.SHIPPING_AUTO_START_AT || '');
+    if (!Number.isFinite(start)) return shippingJson({ error: 'Shipping start time not configured' }, 503);
+    const order = (await shippingSquare(env, `/orders/${encodeURIComponent(orderId)}`)).order;
+    if (!order || order.id !== orderId) throw Error('Order read mismatch');
+    if (order.source?.name !== 'voreas-ec' || order.location_id !== (env.SQUARE_LOCATION_ID || 'WMTQJASMPBH13') || order.state === 'CANCELED') return await record('not_eligible', 'source_location_or_state');
+    const shipments = (order.fulfillments || []).filter(f => f.type === 'SHIPMENT');
+    if (shipments.length > 1) return await record('held', 'multiple_shipments_manual_review');
+    const shipment = shipments[0];
+    if (!shipment || shipment.state !== 'COMPLETED' || !shipment.shipment_details?.tracking_number) return await record('not_ready', 'shipment_not_completed_or_tracking_missing');
+    const shipped = Date.parse(shipment.shipment_details.shipped_at || '');
+    if (!Number.isFinite(shipped) || shipped < start) return await record('held', 'before_auto_start_or_missing_shipped_at');
+    // Auto does not fan out to payment/customer APIs: absent recipient mail is
+    // durably held and the manual manifest can resolve those exact references.
+    const row = (await shippingManifest(env, [order], true)).rows[0];
+    if (!row || row.issue) return await record('held', row?.issue || 'missing_shipment');
+    // Same order PK and provider key as the manual API, not an event-only lock.
+    // Pending/unknown/error claims NEVER auto-expire or auto-retry.
+    const claim = await env.SHIPPING_DB.prepare('INSERT OR IGNORE INTO shipping_notifications (order_id, manifest_hash, status, recipient, tracking_number, updated_at) SELECT ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM shipping_exclusions WHERE order_id = ?)').bind(orderId, `AUTO:${event.event_id}`, 'pending', row.email, row.trackingNumber, new Date().toISOString(), orderId).run();
+    if (!claim.meta.changes) return await record('skipped_existing_or_excluded');
+    let status = 'unknown', providerId = null;
+    try {
+      const res = await fetch('https://api.resend.com/emails', { signal: AbortSignal.timeout(3000), method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `voreas-shipped-v1-${orderId}` }, body: JSON.stringify(shippingEmail(row)) });
+      const data = await res.json();
+      if (res.ok && data.id) { status = 'sent'; providerId = data.id; }
+      else status = 'provider_error';
+    } catch { /* Accepted-but-response-lost must not cause a second email. */ }
+    await env.SHIPPING_DB.prepare('UPDATE shipping_notifications SET status = ?, resend_id = ?, updated_at = ? WHERE order_id = ?').bind(status, providerId, new Date().toISOString(), orderId).run();
+    return await record(status);
+  } catch {
+    // Non-2xx requests are retried by Square. A durable order claim, if already
+    // taken, still prevents another provider call after any D1 write failure.
+    console.error('shipping_webhook_processing_failed');
+    return shippingJson({ error: 'Shipping processing failed; reconcile durable records' }, 503);
+  }
+}
+async function handleNotifyShipped(request, env) {
+  if (!env.SHIPPING_ADMIN_TOKEN) return shippingJson({ error: 'Shipping administration not configured' }, 503);
+  // Never reuse the public manage.html password or accept credentials in URLs.
+  const expected = `Bearer ${env.SHIPPING_ADMIN_TOKEN}`, supplied = request.headers.get('Authorization') || '';
+  const digest = async value => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
+  const a = await digest(expected), b = await digest(supplied);
+  let mismatch = 0; for (let i = 0; i < a.length; i++) mismatch |= a[i] ^ b[i];
+  if (mismatch) return shippingJson({ error: 'Unauthorized' }, 401);
+  if (!env.SQUARE_ACCESS_TOKEN) return shippingJson({ error: 'Square not configured' }, 503);
+  let body; try { body = await request.json(); } catch { return shippingJson({ error: 'Invalid JSON' }, 400); }
+  const mode = body.mode || 'dry-run';
+  if (!['dry-run', 'test', 'send'].includes(mode)) return shippingJson({ error: 'Invalid mode' }, 400);
+  try {
+    const manifest = await shippingManifest(env);
+    if (mode === 'dry-run') {
+      const records = env.SHIPPING_DB ? (await env.SHIPPING_DB.prepare('SELECT order_id, status, resend_id, updated_at FROM shipping_notifications').all()).results : [];
+      const exclusions = env.SHIPPING_DB ? (await env.SHIPPING_DB.prepare('SELECT order_id, reason, decision_ref FROM shipping_exclusions').all()).results : [];
+      const observations = env.SHIPPING_DB ? (await env.SHIPPING_DB.prepare('SELECT * FROM shipping_observations ORDER BY updated_at DESC LIMIT 1000').all()).results : [];
+      const excludedIds = new Set(exclusions.map(r => r.order_id)), claimedIds = new Set(records.map(r => r.order_id));
+      const unnotified = manifest.rows.filter(r => !excludedIds.has(r.orderId) && !claimedIds.has(r.orderId));
+      return shippingJson({ ...manifest, records, exclusions, observations, unnotified, autoEnabled: env.SHIPPING_AUTO_ENABLED === 'true', sendEnabled: !!(env.SHIPPING_DB && env.RESEND_API_KEY && env.SHIPPING_APPROVED_MANIFEST === manifest.hash) });
+    }
+    if (!env.SHIPPING_DB || !env.RESEND_API_KEY) return shippingJson({ error: 'Shipping DB / Resend not configured' }, 503);
+    if (mode === 'send' && !(await shippingExclusionsReady(env))) return shippingJson({ error: 'Permanent exclusions not initialized' }, 503);
+    if (body.manifestHash !== manifest.hash) return shippingJson({ error: 'Manifest changed; repeat dry-run and approval', hash: manifest.hash }, 409);
+    if (mode === 'send' && env.SHIPPING_APPROVED_MANIFEST !== manifest.hash) return shippingJson({ error: 'S I approval required; operator must configure exact approved manifest hash AFTER confirmation of test receipt' }, 403);
+    if (mode === 'send') {
+      const test = await env.SHIPPING_DB.prepare('SELECT status FROM shipping_notifications WHERE order_id = ?').bind(`TEST:${manifest.hash}`).first();
+      if (test?.status !== 'sent') return shippingJson({ error: 'Successful S I test required before customer send' }, 403);
+    }
+    const excludedIds = mode === 'send' ? new Set((await env.SHIPPING_DB.prepare('SELECT order_id FROM shipping_exclusions').all()).results.map(r => r.order_id)) : new Set();
+    const candidates = manifest.rows.filter(r => !r.issue && !excludedIds.has(r.orderId));
+    // Individual recovery only when orderIds is supplied; legacy batch remains approval-gated.
+    if (body.orderIds !== undefined && (!Array.isArray(body.orderIds) || body.orderIds.length < 1 || body.orderIds.length > 10 || body.orderIds.some(id => typeof id !== 'string'))) return shippingJson({ error: 'orderIds must contain 1-10 IDs' }, 400);
+    const targets = mode === 'test' ? candidates.filter(r => r.orderId === body.orderId).slice(0, 1) : candidates.filter(r => !body.orderIds || body.orderIds.includes(r.orderId));
+    if (mode === 'test' && targets.length !== 1) return shippingJson({ error: 'Select one eligible orderId from dry-run' }, 400);
+    const existing = new Set((await env.SHIPPING_DB.prepare('SELECT order_id FROM shipping_notifications').all()).results.map(r => r.order_id));
+    const results = []; let attempted = 0;
+    for (const row of targets) {
+      const id = mode === 'test' ? `TEST:${manifest.hash}` : row.orderId;
+      // Avoid one D1 round-trip per old order on later batches (Workers limits).
+      if (existing.has(id)) { results.push({ orderId: row.orderId, status: 'skipped_existing_record' }); continue; }
+      const now = new Date().toISOString();
+      const claim = await env.SHIPPING_DB.prepare('INSERT OR IGNORE INTO shipping_notifications (order_id, manifest_hash, status, recipient, tracking_number, updated_at) SELECT ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM shipping_exclusions WHERE order_id = ?)').bind(id, manifest.hash, 'pending', mode === 'test' ? 's-ikeda@remium.jp' : row.email, row.trackingNumber, now, id).run();
+      if (!claim.meta.changes) { results.push({ orderId: row.orderId, status: 'skipped_existing_record' }); continue; }
+      attempted++;
+      let status = 'unknown', providerId = null;
+      try {
+        const res = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `voreas-shipped-v1-${id}` }, body: JSON.stringify(shippingEmail(row, mode === 'test')) });
+        const data = await res.json();
+        if (res.ok && data.id) { status = 'sent'; providerId = data.id; }
+        else status = 'provider_error';
+      } catch { /* Unknown delivery outcome: keep permanent claim, manual reconciliation only. */ }
+      await env.SHIPPING_DB.prepare('UPDATE shipping_notifications SET status = ?, resend_id = ?, updated_at = ? WHERE order_id = ?').bind(status, providerId, new Date().toISOString(), id).run();
+      results.push({ orderId: row.orderId, status, resendId: providerId });
+      // Stop on uncertain/rejected send. At most 10 new sends per call; repeat
+      // calls are safe and skip ALL previous claims, even failures and pending.
+      if (status !== 'sent' || attempted >= 10) break;
+      await new Promise(resolve => setTimeout(resolve, 600));
+    }
+    return shippingJson({ mode, hash: manifest.hash, attempted, results, held: manifest.held.length, note: 'sent means Resend accepted, not inbox delivery; check provider delivery/bounce events. Repeat send for next batch; never delete pending/error claims to retry without provider reconciliation.' });
+  } catch { return shippingJson({ error: 'Shipping operation failed; inspect durable records before retrying' }, 502); }
+}
 
 // ── Handler: POST /api/coupon-validate ──
 
